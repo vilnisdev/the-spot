@@ -16,7 +16,7 @@ export default function LoginForm({ next }: Props) {
 
       <div>
         <label htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" required autoComplete="email" />
+        <input id="email" name="email" type="email" required autoComplete="email" suppressHydrationWarning />
       </div>
 
       <div>
@@ -27,12 +27,13 @@ export default function LoginForm({ next }: Props) {
           type="password"
           required
           autoComplete="current-password"
+          suppressHydrationWarning
         />
       </div>
 
       {state?.error && <p role="alert">{state.error}</p>}
 
-      <button type="submit" disabled={pending}>
+      <button type="submit" disabled={pending} suppressHydrationWarning>
         {pending ? 'Logging in…' : 'Log in'}
       </button>
     </form>

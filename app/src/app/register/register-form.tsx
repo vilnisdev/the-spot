@@ -10,12 +10,12 @@ export default function RegisterForm() {
     <form action={action}>
       <div>
         <label htmlFor="username">Username</label>
-        <input id="username" name="username" type="text" required autoComplete="username" />
+        <input id="username" name="username" type="text" required autoComplete="username" suppressHydrationWarning />
       </div>
 
       <div>
         <label htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" required autoComplete="email" />
+        <input id="email" name="email" type="email" required autoComplete="email" suppressHydrationWarning />
       </div>
 
       <div>
@@ -26,12 +26,13 @@ export default function RegisterForm() {
           type="password"
           required
           autoComplete="new-password"
+          suppressHydrationWarning
         />
       </div>
 
       {state?.error && <p role="alert">{state.error}</p>}
 
-      <button type="submit" disabled={pending}>
+      <button type="submit" disabled={pending} suppressHydrationWarning>
         {pending ? 'Creating account…' : 'Create account'}
       </button>
     </form>

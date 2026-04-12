@@ -16,12 +16,13 @@ export default function ResetPasswordForm() {
           type="password"
           required
           autoComplete="new-password"
+          suppressHydrationWarning
         />
       </div>
 
       {state?.error && <p role="alert">{state.error}</p>}
 
-      <button type="submit" disabled={pending}>
+      <button type="submit" disabled={pending} suppressHydrationWarning>
         {pending ? 'Updating…' : 'Update password'}
       </button>
     </form>
