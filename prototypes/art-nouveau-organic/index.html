@@ -1,0 +1,1134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Spot — Art Nouveau</title>
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=IM+Fell+English:ital@0;1&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --ink:       #1a1209;
+      --parchment: #f5edda;
+      --cream:     #faf6ec;
+      --gold:      #b8862a;
+      --gold-lt:   #d4a845;
+      --teal:      #2d6e6a;
+      --teal-lt:   #3d8c87;
+      --rose:      #8b3a52;
+      --rose-lt:   #b54d6c;
+      --moss:      #4a6741;
+      --shadow:    rgba(26,18,9,0.18);
+      --panel-w:   360px;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+      background: var(--ink);
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      color: var(--ink);
+    }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    #app {
+      display: flex;
+      height: 100vh;
+      width: 100vw;
+      position: relative;
+    }
+
+    #map-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #map {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ─── Map tile layer override ────────────────────────────────── */
+    .leaflet-tile-pane {
+      filter: sepia(0.45) saturate(0.7) brightness(0.96) hue-rotate(8deg);
+    }
+
+    /* ─── Botanical border overlay ───────────────────────────────── */
+    #map-frame {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 500;
+    }
+
+    /* ─── Side Panel ─────────────────────────────────────────────── */
+    #panel {
+      width: var(--panel-w);
+      min-width: var(--panel-w);
+      background: var(--parchment);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      z-index: 600;
+      box-shadow: -4px 0 32px var(--shadow);
+      overflow: hidden;
+    }
+
+    /* Panel decorative vine border left edge */
+    #panel::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 6px;
+      background: linear-gradient(180deg, var(--gold) 0%, var(--teal) 40%, var(--rose) 70%, var(--gold) 100%);
+      opacity: 0.7;
+    }
+
+    /* ─── Panel Header ───────────────────────────────────────────── */
+    #panel-header {
+      padding: 28px 24px 20px 30px;
+      border-bottom: 1px solid rgba(184,134,42,0.3);
+      position: relative;
+      background: linear-gradient(160deg, #f0e8d0 0%, var(--parchment) 100%);
+      flex-shrink: 0;
+    }
+
+    #panel-header h1 {
+      font-family: 'IM Fell English', serif;
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      line-height: 1;
+    }
+
+    #panel-header h1 span {
+      color: var(--gold);
+    }
+
+    #panel-header p.tagline {
+      margin-top: 4px;
+      font-size: 0.8rem;
+      font-style: italic;
+      color: var(--teal);
+      letter-spacing: 0.08em;
+    }
+
+    /* Decorative ornament under header title */
+    .ornament {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      height: 18px;
+    }
+
+    /* ─── Search ─────────────────────────────────────────────────── */
+    #search-wrap {
+      padding: 16px 20px 12px 30px;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    #search-wrap input {
+      width: 100%;
+      padding: 10px 14px 10px 38px;
+      border: 1.5px solid rgba(184,134,42,0.4);
+      border-radius: 24px;
+      background: var(--cream);
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #search-wrap input:focus {
+      border-color: var(--gold);
+      box-shadow: 0 0 0 3px rgba(184,134,42,0.12);
+    }
+
+    #search-wrap input::placeholder { color: rgba(26,18,9,0.4); font-style: italic; }
+
+    .search-icon {
+      position: absolute;
+      left: 34px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 16px;
+      height: 16px;
+      color: var(--gold);
+      pointer-events: none;
+    }
+
+    /* ─── Category Pills ─────────────────────────────────────────── */
+    #cats {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      padding: 4px 20px 14px 30px;
+      flex-shrink: 0;
+      border-bottom: 1px solid rgba(184,134,42,0.2);
+    }
+
+    .cat-pill {
+      padding: 4px 13px;
+      border-radius: 20px;
+      font-size: 0.72rem;
+      letter-spacing: 0.06em;
+      font-style: italic;
+      cursor: pointer;
+      border: 1.5px solid transparent;
+      transition: all 0.18s;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    .cat-pill[data-cat="all"]    { background: var(--gold); color: #fff; border-color: var(--gold); }
+    .cat-pill[data-cat="cafe"]   { background: rgba(45,110,106,0.1); color: var(--teal); border-color: rgba(45,110,106,0.35); }
+    .cat-pill[data-cat="park"]   { background: rgba(74,103,65,0.1);  color: var(--moss); border-color: rgba(74,103,65,0.35); }
+    .cat-pill[data-cat="art"]    { background: rgba(139,58,82,0.1);  color: var(--rose); border-color: rgba(139,58,82,0.35); }
+    .cat-pill[data-cat="bar"]    { background: rgba(26,18,9,0.07);   color: var(--ink);  border-color: rgba(26,18,9,0.25); }
+    .cat-pill[data-cat="market"] { background: rgba(184,134,42,0.1); color: var(--gold); border-color: rgba(184,134,42,0.4); }
+
+    .cat-pill.active[data-cat="all"]    { background: var(--gold); color: #fff; }
+    .cat-pill.active[data-cat="cafe"]   { background: var(--teal); color: #fff; border-color: var(--teal); }
+    .cat-pill.active[data-cat="park"]   { background: var(--moss); color: #fff; border-color: var(--moss); }
+    .cat-pill.active[data-cat="art"]    { background: var(--rose); color: #fff; border-color: var(--rose); }
+    .cat-pill.active[data-cat="bar"]    { background: var(--ink);  color: var(--parchment); border-color: var(--ink); }
+    .cat-pill.active[data-cat="market"] { background: var(--gold); color: #fff; border-color: var(--gold); }
+
+    /* ─── Spot List ──────────────────────────────────────────────── */
+    #spot-list {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 16px 20px 24px;
+    }
+
+    #spot-list::-webkit-scrollbar { width: 5px; }
+    #spot-list::-webkit-scrollbar-track { background: transparent; }
+    #spot-list::-webkit-scrollbar-thumb { background: rgba(184,134,42,0.3); border-radius: 3px; }
+
+    .spot-card {
+      padding: 14px 14px 12px 14px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      background: var(--cream);
+      border: 1px solid rgba(184,134,42,0.18);
+      cursor: pointer;
+      transition: box-shadow 0.18s, border-color 0.18s, transform 0.12s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .spot-card::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 3px;
+      border-radius: 8px 0 0 8px;
+    }
+
+    .spot-card[data-cat="cafe"]::before   { background: var(--teal); }
+    .spot-card[data-cat="park"]::before   { background: var(--moss); }
+    .spot-card[data-cat="art"]::before    { background: var(--rose); }
+    .spot-card[data-cat="bar"]::before    { background: var(--ink); }
+    .spot-card[data-cat="market"]::before { background: var(--gold); }
+
+    .spot-card:hover {
+      box-shadow: 0 4px 18px var(--shadow);
+      border-color: rgba(184,134,42,0.4);
+      transform: translateY(-1px);
+    }
+
+    .spot-card.active {
+      border-color: var(--gold);
+      box-shadow: 0 4px 22px rgba(184,134,42,0.22);
+    }
+
+    .spot-card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+
+    .spot-icon {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .spot-info { flex: 1; min-width: 0; }
+
+    .spot-name {
+      font-family: 'IM Fell English', serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .spot-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 3px;
+      font-size: 0.72rem;
+      color: rgba(26,18,9,0.55);
+      font-style: italic;
+    }
+
+    .spot-meta .dot { width: 3px; height: 3px; border-radius: 50%; background: currentColor; flex-shrink: 0; }
+
+    .spot-desc {
+      margin-top: 8px;
+      font-size: 0.82rem;
+      line-height: 1.55;
+      color: rgba(26,18,9,0.7);
+      font-style: italic;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .spot-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      margin-top: 8px;
+    }
+
+    .spot-tag {
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      letter-spacing: 0.05em;
+      background: rgba(184,134,42,0.1);
+      color: var(--gold);
+      border: 1px solid rgba(184,134,42,0.25);
+    }
+
+    /* ─── Detail Drawer ──────────────────────────────────────────── */
+    #detail-drawer {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: var(--parchment);
+      border-top: 2px solid var(--gold);
+      z-index: 700;
+      transform: translateY(100%);
+      transition: transform 0.32s cubic-bezier(0.22,1,0.36,1);
+      max-height: 68vh;
+      overflow-y: auto;
+      padding: 20px 24px 30px 30px;
+    }
+
+    #detail-drawer.open {
+      transform: translateY(0);
+    }
+
+    #detail-close {
+      position: absolute;
+      top: 14px; right: 16px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gold);
+      font-size: 1.2rem;
+      line-height: 1;
+      padding: 4px;
+      transition: transform 0.15s;
+    }
+    #detail-close:hover { transform: rotate(90deg); }
+
+    #detail-category-bar {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-style: italic;
+      letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+
+    #detail-name {
+      font-family: 'IM Fell English', serif;
+      font-size: 1.55rem;
+      font-weight: 400;
+      color: var(--ink);
+      line-height: 1.15;
+    }
+
+    #detail-address {
+      font-size: 0.8rem;
+      color: rgba(26,18,9,0.55);
+      font-style: italic;
+      margin-top: 4px;
+    }
+
+    .detail-divider {
+      height: 1px;
+      background: linear-gradient(90deg, var(--gold) 0%, transparent 100%);
+      margin: 14px 0;
+      opacity: 0.4;
+    }
+
+    #detail-desc {
+      font-size: 0.92rem;
+      line-height: 1.7;
+      color: rgba(26,18,9,0.78);
+      font-style: italic;
+    }
+
+    #detail-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 14px;
+    }
+
+    .detail-badge {
+      font-size: 0.72rem;
+      padding: 4px 12px;
+      border-radius: 14px;
+      letter-spacing: 0.06em;
+      background: rgba(184,134,42,0.12);
+      color: var(--gold);
+      border: 1px solid rgba(184,134,42,0.3);
+    }
+
+    #detail-hours {
+      margin-top: 16px;
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .detail-stat {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .detail-stat-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.8;
+    }
+
+    .detail-stat-value {
+      font-family: 'IM Fell English', serif;
+      font-size: 0.95rem;
+      color: var(--ink);
+    }
+
+    /* ─── Custom Leaflet Markers ─────────────────────────────────── */
+    .custom-marker {
+      background: none;
+      border: none;
+    }
+
+    .marker-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      cursor: pointer;
+      filter: drop-shadow(0 3px 6px rgba(26,18,9,0.35));
+      transition: transform 0.15s;
+    }
+
+    .marker-wrap:hover { transform: scale(1.08) translateY(-2px); }
+
+    .marker-body {
+      width: 36px;
+      height: 36px;
+      border-radius: 50% 50% 50% 4px;
+      transform: rotate(45deg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid rgba(255,255,255,0.6);
+      position: relative;
+    }
+
+    .marker-body svg {
+      transform: rotate(-45deg);
+      width: 18px;
+      height: 18px;
+    }
+
+    .marker-body::after {
+      content: '';
+      position: absolute;
+      inset: 3px;
+      border-radius: 50% 50% 50% 2px;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .marker-label {
+      margin-top: 2px;
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 10px;
+      font-style: italic;
+      color: #fff;
+      background: rgba(26,18,9,0.72);
+      padding: 1px 6px;
+      border-radius: 8px;
+      white-space: nowrap;
+      max-width: 90px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      letter-spacing: 0.03em;
+    }
+
+    /* Category colours for markers */
+    .mc-cafe   { background: var(--teal); }
+    .mc-park   { background: var(--moss); }
+    .mc-art    { background: var(--rose); }
+    .mc-bar    { background: var(--ink); }
+    .mc-market { background: var(--gold); }
+
+    .marker-active .marker-wrap {
+      transform: scale(1.15) translateY(-4px);
+    }
+    .marker-active .marker-label {
+      background: var(--gold);
+      color: #fff;
+    }
+
+    /* ─── Leaflet popup custom ───────────────────────────────────── */
+    .leaflet-popup-content-wrapper {
+      background: var(--parchment);
+      border: 1.5px solid rgba(184,134,42,0.4);
+      border-radius: 10px;
+      box-shadow: 0 6px 28px var(--shadow);
+      font-family: 'Cormorant Garamond', serif;
+    }
+    .leaflet-popup-content {
+      margin: 12px 16px;
+      color: var(--ink);
+    }
+    .leaflet-popup-tip-container { display: none; }
+    .leaflet-popup-close-button {
+      color: var(--gold) !important;
+      font-size: 18px !important;
+      top: 6px !important;
+      right: 8px !important;
+    }
+
+    .popup-name {
+      font-family: 'IM Fell English', serif;
+      font-size: 1rem;
+      line-height: 1.2;
+      color: var(--ink);
+    }
+    .popup-cat {
+      font-size: 0.72rem;
+      font-style: italic;
+      color: var(--gold);
+      margin-top: 2px;
+      letter-spacing: 0.06em;
+    }
+
+    /* ─── Top bar (map overlay) ──────────────────────────────────── */
+    #topbar {
+      position: absolute;
+      top: 16px; left: 16px; right: 16px;
+      z-index: 490;
+      pointer-events: none;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .map-badge {
+      pointer-events: all;
+      background: var(--parchment);
+      border: 1.5px solid rgba(184,134,42,0.35);
+      border-radius: 24px;
+      padding: 6px 14px;
+      font-size: 0.75rem;
+      font-style: italic;
+      color: var(--teal);
+      letter-spacing: 0.06em;
+      box-shadow: 0 2px 10px var(--shadow);
+    }
+
+    /* ─── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 700px) {
+      :root { --panel-w: 100vw; }
+      #app { flex-direction: column; }
+      #panel {
+        width: 100%;
+        height: 50vh;
+        min-width: unset;
+        order: 2;
+      }
+      #map-container { order: 1; height: 50vh; }
+      #panel::before { top: 0; bottom: unset; left: 0; right: 0; width: unset; height: 4px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ─── Map ──────────────────────────────────────────────────────── -->
+  <div id="map-container">
+    <div id="map"></div>
+
+    <!-- SVG botanical frame overlay -->
+    <svg id="map-frame" viewBox="0 0 100 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="softglow">
+          <feGaussianBlur stdDeviation="0.4" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+      </defs>
+
+      <!-- Corner botanical ornaments – top-left -->
+      <g filter="url(#softglow)" opacity="0.72">
+        <!-- Stem curve top-left -->
+        <path d="M2,2 Q8,14 3,28" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <path d="M2,2 Q14,8 28,3" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <!-- Leaf cluster TL -->
+        <ellipse cx="5.5" cy="8"  rx="3" ry="1.4" fill="#4a6741" opacity="0.6" transform="rotate(-30,5.5,8)"/>
+        <ellipse cx="3.5" cy="13" rx="2.8" ry="1.2" fill="#2d6e6a" opacity="0.55" transform="rotate(20,3.5,13)"/>
+        <ellipse cx="7"   cy="5"  rx="2.5" ry="1.1" fill="#4a6741" opacity="0.5" transform="rotate(-60,7,5)"/>
+        <ellipse cx="10"  cy="3.5" rx="2.8" ry="1.2" fill="#2d6e6a" opacity="0.5" transform="rotate(-20,10,3.5)"/>
+        <ellipse cx="16"  cy="2.8" rx="2.6" ry="1.1" fill="#4a6741" opacity="0.45" transform="rotate(10,16,2.8)"/>
+        <!-- Tiny blossom TL -->
+        <circle cx="6" cy="17" r="1.2" fill="#8b3a52" opacity="0.55"/>
+        <circle cx="6" cy="17" r="0.5" fill="#f5edda" opacity="0.7"/>
+        <circle cx="19" cy="3" r="1" fill="#b8862a" opacity="0.6"/>
+      </g>
+
+      <!-- Top-right corner -->
+      <g filter="url(#softglow)" opacity="0.72" transform="scale(-1,1) translate(-100,0)">
+        <path d="M2,2 Q8,14 3,28" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <path d="M2,2 Q14,8 28,3" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <ellipse cx="5.5" cy="8"  rx="3" ry="1.4" fill="#4a6741" opacity="0.6" transform="rotate(-30,5.5,8)"/>
+        <ellipse cx="3.5" cy="13" rx="2.8" ry="1.2" fill="#2d6e6a" opacity="0.55" transform="rotate(20,3.5,13)"/>
+        <ellipse cx="7"   cy="5"  rx="2.5" ry="1.1" fill="#4a6741" opacity="0.5" transform="rotate(-60,7,5)"/>
+        <ellipse cx="10"  cy="3.5" rx="2.8" ry="1.2" fill="#2d6e6a" opacity="0.5" transform="rotate(-20,10,3.5)"/>
+        <ellipse cx="16"  cy="2.8" rx="2.6" ry="1.1" fill="#4a6741" opacity="0.45" transform="rotate(10,16,2.8)"/>
+        <circle cx="6" cy="17" r="1.2" fill="#8b3a52" opacity="0.55"/>
+        <circle cx="6" cy="17" r="0.5" fill="#f5edda" opacity="0.7"/>
+        <circle cx="19" cy="3" r="1" fill="#b8862a" opacity="0.6"/>
+      </g>
+
+      <!-- Bottom-left corner -->
+      <g filter="url(#softglow)" opacity="0.72" transform="scale(1,-1) translate(0,-100)">
+        <path d="M2,2 Q8,14 3,28" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <path d="M2,2 Q14,8 28,3" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <ellipse cx="5.5" cy="8"  rx="3" ry="1.4" fill="#4a6741" opacity="0.6" transform="rotate(-30,5.5,8)"/>
+        <ellipse cx="3.5" cy="13" rx="2.8" ry="1.2" fill="#2d6e6a" opacity="0.55" transform="rotate(20,3.5,13)"/>
+        <ellipse cx="7"   cy="5"  rx="2.5" ry="1.1" fill="#4a6741" opacity="0.5" transform="rotate(-60,7,5)"/>
+        <circle cx="6" cy="17" r="1.2" fill="#8b3a52" opacity="0.55"/>
+        <circle cx="6" cy="17" r="0.5" fill="#f5edda" opacity="0.7"/>
+      </g>
+
+      <!-- Bottom-right corner -->
+      <g filter="url(#softglow)" opacity="0.72" transform="scale(-1,-1) translate(-100,-100)">
+        <path d="M2,2 Q8,14 3,28" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <path d="M2,2 Q14,8 28,3" fill="none" stroke="#b8862a" stroke-width="0.35" stroke-linecap="round"/>
+        <ellipse cx="5.5" cy="8"  rx="3" ry="1.4" fill="#4a6741" opacity="0.6" transform="rotate(-30,5.5,8)"/>
+        <ellipse cx="3.5" cy="13" rx="2.8" ry="1.2" fill="#2d6e6a" opacity="0.55" transform="rotate(20,3.5,13)"/>
+        <circle cx="6" cy="17" r="1.2" fill="#8b3a52" opacity="0.55"/>
+        <circle cx="6" cy="17" r="0.5" fill="#f5edda" opacity="0.7"/>
+      </g>
+    </svg>
+
+    <!-- Top badge -->
+    <div id="topbar">
+      <div class="map-badge">14 curated spots · Riga, Latvia</div>
+    </div>
+  </div>
+
+  <!-- ─── Side Panel ────────────────────────────────────────────────── -->
+  <aside id="panel">
+
+    <!-- Header -->
+    <div id="panel-header">
+      <!-- Botanical header SVG -->
+      <svg width="280" height="38" viewBox="0 0 280 38" fill="none" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;right:0;opacity:0.18;pointer-events:none;">
+        <path d="M0,19 Q35,2 70,19 Q105,36 140,19 Q175,2 210,19 Q245,36 280,19" stroke="#b8862a" stroke-width="1" fill="none"/>
+        <circle cx="70" cy="19" r="3" fill="#b8862a"/>
+        <circle cx="140" cy="19" r="3" fill="#4a6741"/>
+        <circle cx="210" cy="19" r="3" fill="#8b3a52"/>
+      </svg>
+
+      <h1>The <span>Spot</span></h1>
+      <p class="tagline">a cartography of hidden pleasures</p>
+
+      <!-- Ornament SVG -->
+      <svg class="ornament" viewBox="0 0 300 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M0,9 L120,9" stroke="#b8862a" stroke-width="0.8" opacity="0.5"/>
+        <path d="M180,9 L300,9" stroke="#b8862a" stroke-width="0.8" opacity="0.5"/>
+        <!-- Central ornament -->
+        <circle cx="150" cy="9" r="4" fill="none" stroke="#b8862a" stroke-width="0.8" opacity="0.6"/>
+        <circle cx="150" cy="9" r="1.5" fill="#b8862a" opacity="0.5"/>
+        <ellipse cx="132" cy="9" rx="5" ry="2.5" fill="none" stroke="#4a6741" stroke-width="0.7" opacity="0.5" transform="rotate(-15,132,9)"/>
+        <ellipse cx="168" cy="9" rx="5" ry="2.5" fill="none" stroke="#4a6741" stroke-width="0.7" opacity="0.5" transform="rotate(15,168,9)"/>
+        <!-- Diamond accents -->
+        <path d="M124,9 l3,-3 l3,3 l-3,3 z" fill="#8b3a52" opacity="0.35"/>
+        <path d="M170,9 l3,-3 l3,3 l-3,3 z" fill="#8b3a52" opacity="0.35"/>
+      </svg>
+    </div>
+
+    <!-- Search -->
+    <div id="search-wrap">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+      </svg>
+      <input type="text" id="search-input" placeholder="seek a hidden corner…" />
+    </div>
+
+    <!-- Category pills -->
+    <div id="cats">
+      <div class="cat-pill active" data-cat="all">All</div>
+      <div class="cat-pill" data-cat="cafe">Café</div>
+      <div class="cat-pill" data-cat="park">Garden</div>
+      <div class="cat-pill" data-cat="art">Art</div>
+      <div class="cat-pill" data-cat="bar">Bar</div>
+      <div class="cat-pill" data-cat="market">Market</div>
+    </div>
+
+    <!-- Spot list -->
+    <div id="spot-list"></div>
+
+    <!-- Detail Drawer -->
+    <div id="detail-drawer">
+      <button id="detail-close" aria-label="Close">✕</button>
+      <div id="detail-category-bar"></div>
+      <div id="detail-name"></div>
+      <div id="detail-address"></div>
+      <div class="detail-divider"></div>
+      <div id="detail-desc"></div>
+      <div id="detail-tags"></div>
+      <div id="detail-hours"></div>
+    </div>
+
+  </aside>
+</div>
+
+<script>
+// ─── Data ──────────────────────────────────────────────────────────────────
+const SPOTS = [
+  {
+    id: 1,
+    name: "Folkklubs ALA Pagrabs",
+    cat: "bar",
+    lat: 56.9490, lng: 24.1052,
+    address: "Peldu iela 19, Vecrīga",
+    desc: "A labyrinthine cellar bar beneath cobblestone streets — vaulted brick archways, Latvian folk music echoing through candlelit chambers, and amber rye ales served in clay mugs.",
+    tags: ["folk music", "craft beer", "medieval cellar", "live gigs"],
+    hours: "16:00 – 02:00",
+    days: "Tue – Sun",
+    vibe: "soulful"
+  },
+  {
+    id: 2,
+    name: "Kim? Contemporary Art",
+    cat: "art",
+    lat: 56.9535, lng: 24.1123,
+    address: "Sporta iela 2, Centrs",
+    desc: "Riga's most adventurous contemporary art space, occupying a converted Soviet-era building. Radical installations, emerging Baltic voices, and a reading room that whispers secrets.",
+    tags: ["installation", "Baltic art", "experimental", "reading room"],
+    hours: "12:00 – 19:00",
+    days: "Wed – Sun",
+    vibe: "provocative"
+  },
+  {
+    id: 3,
+    name: "Kalnciema kvartāls",
+    cat: "market",
+    lat: 56.9398, lng: 24.0821,
+    address: "Kalnciema iela 35, Āgenskalns",
+    desc: "A Saturday morning ritual in a wooden Art Nouveau courtyard — local farmers, honey-sellers, ceramic artists, and a waft of fresh-baked sourdough from the courtyard bakery.",
+    tags: ["farmers market", "artisan crafts", "Art Nouveau", "Āgenskalns"],
+    hours: "09:00 – 15:00",
+    days: "Saturday",
+    vibe: "communal"
+  },
+  {
+    id: 4,
+    name: "Double Coffee (Alberta iela)",
+    cat: "cafe",
+    lat: 56.9574, lng: 24.1189,
+    address: "Alberta iela 11, Quiet Centre",
+    desc: "Tucked beside the most ornate Art Nouveau facades in Europe. Watch gilded faces and floral reliefs from a window table while nursing a flat white in the gentlest morning silence.",
+    tags: ["Art Nouveau street", "window seats", "flat white", "architecture"],
+    hours: "08:00 – 21:00",
+    days: "Daily",
+    vibe: "contemplative"
+  },
+  {
+    id: 5,
+    name: "Kronvalda parks",
+    cat: "park",
+    lat: 56.9560, lng: 24.1058,
+    address: "Kronvalda bulvāris, Centrs",
+    desc: "A slender riverside park threaded with linden-shaded paths and cast-iron benches. In July the air turns heavy with linden blossom — Riga's signature summer perfume.",
+    tags: ["linden trees", "riverside", "quiet", "benches"],
+    hours: "Open 24h",
+    days: "Daily",
+    vibe: "meditative"
+  },
+  {
+    id: 6,
+    name: "Vincents",
+    cat: "bar",
+    lat: 56.9539, lng: 24.1180,
+    address: "Elizabetes iela 19, Centrs",
+    desc: "Riga's legendary fine-dining institution reimagined as an evening salon. Chef Martins Ritins sources ingredients with near-obsessive locality. The wine list alone justifies the pilgrimage.",
+    tags: ["fine dining", "Latvian cuisine", "wine", "institution"],
+    hours: "18:00 – 23:00",
+    days: "Mon – Sat",
+    vibe: "refined"
+  },
+  {
+    id: 7,
+    name: "Mežaparks Forest",
+    cat: "park",
+    lat: 57.0003, lng: 24.1418,
+    address: "Kokneses prospekts, Mežaparks",
+    desc: "An enchanted pine forest on the edge of the city. Bicycle paths wind through century-old trees to a lake shore where children still launch wooden toy boats at dusk.",
+    tags: ["pine forest", "cycling", "lake", "nature"],
+    hours: "Open 24h",
+    days: "Daily",
+    vibe: "enchanted"
+  },
+  {
+    id: 8,
+    name: "Cafe Osiris",
+    cat: "cafe",
+    lat: 56.9465, lng: 24.1070,
+    address: "Mārstaļu iela 7, Vecrīga",
+    desc: "Hidden in a medieval courtyard accessible only by an unmarked gate — iron courtyard tables, climbing roses on crumbling plaster, and Turkish coffee ground to order.",
+    tags: ["hidden courtyard", "medieval", "Turkish coffee", "roses"],
+    hours: "10:00 – 22:00",
+    days: "Daily",
+    vibe: "secretive"
+  },
+  {
+    id: 9,
+    name: "Latvian National Museum of Art",
+    cat: "art",
+    lat: 56.9558, lng: 24.1140,
+    address: "Jaņa Rozentāla laukums 1",
+    desc: "A magnificent Jugendstil palace housing Latvia's finest collection of 19th-century painting. The gilded ceilings are themselves a masterwork.",
+    tags: ["Jugendstil", "Latvian painting", "19th century", "palace"],
+    hours: "10:00 – 18:00",
+    days: "Tue – Sun",
+    vibe: "majestic"
+  },
+  {
+    id: 10,
+    name: "Central Market Pavilions",
+    cat: "market",
+    lat: 56.9430, lng: 24.1190,
+    address: "Nēģu iela 7, Centrs",
+    desc: "Five repurposed German zeppelin hangars now shelter Europe's largest covered market — fishmongers in rubber boots, mushroom foragers, pickle stalls, and the smell of salt-cured sprats.",
+    tags: ["zeppelin hangars", "sprats", "heritage", "fishmongers"],
+    hours: "07:00 – 17:00",
+    days: "Daily",
+    vibe: "vivid"
+  },
+  {
+    id: 11,
+    name: "Labietis Microbrewery",
+    cat: "bar",
+    lat: 56.9501, lng: 24.1305,
+    address: "Aristīda Briāna iela 9a, Centrs",
+    desc: "A forest-themed taproom where every brew carries a Latvian mythological name. Try the smoked sauna ale or juniper-laced seasonal kvass while seated on log stools.",
+    tags: ["craft beer", "mythology", "smoked ale", "kvass"],
+    hours: "14:00 – 00:00",
+    days: "Mon – Sun",
+    vibe: "mythic"
+  },
+  {
+    id: 12,
+    name: "Sigulda Bobsled Track",
+    cat: "art",
+    lat: 57.1490, lng: 24.8550,
+    address: "Šveices iela 13, Sigulda",
+    desc: "A summer bobsled run through ancient Gauja valley forest — as thrilling a piece of industrial sculpture as any gallery installation, at 100 km/h through pines.",
+    tags: ["adrenaline", "Gauja valley", "summer", "forest"],
+    hours: "11:00 – 17:00",
+    days: "Sat – Sun",
+    vibe: "electric"
+  },
+  {
+    id: 13,
+    name: "Schwarze Katze Café",
+    cat: "cafe",
+    lat: 56.9520, lng: 24.1160,
+    address: "Meistaru iela 10–12, Vecrīga",
+    desc: "Named for the black cat perched on a nearby Art Nouveau rooftop (placed there in spite). Exposed brick, strong espresso, and antiquarian books organised by colour.",
+    tags: ["espresso", "antiquarian books", "brick vault", "legend"],
+    hours: "09:00 – 20:00",
+    days: "Daily",
+    vibe: "literary"
+  },
+  {
+    id: 14,
+    name: "Vērmanes Garden",
+    cat: "park",
+    lat: 56.9495, lng: 24.1145,
+    address: "Elizabetes iela, Centrs",
+    desc: "Riga's oldest public park, donated by a German widow in 1817. A tiered fountain, baroque pavilion, and carousel at its heart — a pocket of 19th-century civic grace.",
+    tags: ["baroque", "fountain", "historic", "carousel"],
+    hours: "06:00 – 22:00",
+    days: "Daily",
+    vibe: "nostalgic"
+  }
+];
+
+// ─── Category metadata ──────────────────────────────────────────────────────
+const CAT_META = {
+  cafe:   { label: "Café",    colour: "#2d6e6a", iconPath: "M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8zM6 1v3M10 1v3M14 1v3" },
+  park:   { label: "Garden",  colour: "#4a6741", iconPath: "M12 22V12M12 12C12 12 8 9 8 6a4 4 0 0 1 8 0c0 3-4 6-4 6zM6 22h12" },
+  art:    { label: "Art",     colour: "#8b3a52", iconPath: "M2 12C2 12 5 4 12 4s10 8 10 8-3 8-10 8S2 12 2 12z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" },
+  bar:    { label: "Bar",     colour: "#1a1209", iconPath: "M8 2h8l1 7H7L8 2zM7 9a5 5 0 0 0 10 0M12 14v8M8 22h8" },
+  market: { label: "Market",  colour: "#b8862a", iconPath: "M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0" }
+};
+
+// Icon SVG bodies per category
+function categoryIcon(cat, size=18, colour="#fff") {
+  const meta = CAT_META[cat] || CAT_META.bar;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${colour}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${meta.iconPath}"/></svg>`;
+}
+
+// ─── State ──────────────────────────────────────────────────────────────────
+let activeFilter = "all";
+let activeSpotId = null;
+let searchQuery = "";
+let markers = {};
+
+// ─── Map ────────────────────────────────────────────────────────────────────
+const map = L.map("map", {
+  center: [56.9490, 24.1052],
+  zoom: 14,
+  zoomControl: false
+});
+
+L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+  maxZoom: 19
+}).addTo(map);
+
+L.control.zoom({ position: "bottomright" }).addTo(map);
+
+// ─── Build Markers ──────────────────────────────────────────────────────────
+function buildMarkerIcon(spot, isActive=false) {
+  const meta = CAT_META[spot.cat] || CAT_META.bar;
+  const icon = categoryIcon(spot.cat, 16, "#fff");
+  const activeCls = isActive ? " marker-active" : "";
+  const html = `
+    <div class="marker-wrap${activeCls}">
+      <div class="marker-body mc-${spot.cat}">${icon}</div>
+      <div class="marker-label">${spot.name}</div>
+    </div>`;
+  return L.divIcon({
+    html,
+    className: "custom-marker",
+    iconSize: [80, 58],
+    iconAnchor: [40, 46],
+    popupAnchor: [0, -48]
+  });
+}
+
+SPOTS.forEach(spot => {
+  const marker = L.marker([spot.lat, spot.lng], {
+    icon: buildMarkerIcon(spot),
+    title: spot.name
+  }).addTo(map);
+
+  const meta = CAT_META[spot.cat] || CAT_META.bar;
+  marker.bindPopup(`
+    <div class="popup-name">${spot.name}</div>
+    <div class="popup-cat" style="color:${meta.colour}">${meta.label} · ${spot.vibe}</div>
+  `, { maxWidth: 180 });
+
+  marker.on("click", () => selectSpot(spot.id));
+  markers[spot.id] = marker;
+});
+
+// ─── Render spot list ────────────────────────────────────────────────────────
+function renderList() {
+  const list = document.getElementById("spot-list");
+  list.innerHTML = "";
+
+  const filtered = SPOTS.filter(s => {
+    const matchCat = activeFilter === "all" || s.cat === activeFilter;
+    const q = searchQuery.toLowerCase();
+    const matchQ = !q || s.name.toLowerCase().includes(q)
+      || s.desc.toLowerCase().includes(q)
+      || s.tags.some(t => t.toLowerCase().includes(q));
+    return matchCat && matchQ;
+  });
+
+  if (filtered.length === 0) {
+    list.innerHTML = `<p style="font-style:italic;color:rgba(26,18,9,0.4);padding:20px 0;text-align:center;font-size:0.85rem;">No spots found…</p>`;
+    return;
+  }
+
+  filtered.forEach(spot => {
+    const meta = CAT_META[spot.cat];
+    const isActive = spot.id === activeSpotId;
+    const card = document.createElement("div");
+    card.className = `spot-card${isActive ? " active" : ""}`;
+    card.dataset.cat = spot.cat;
+    card.dataset.id = spot.id;
+    card.innerHTML = `
+      <div class="spot-card-header">
+        <div class="spot-icon">${buildSpotSVG(spot.cat, meta.colour)}</div>
+        <div class="spot-info">
+          <div class="spot-name">${spot.name}</div>
+          <div class="spot-meta">
+            <span style="color:${meta.colour};font-weight:600">${meta.label}</span>
+            <span class="dot"></span>
+            <span>${spot.days}</span>
+            <span class="dot"></span>
+            <span style="font-style:italic;color:${meta.colour}">${spot.vibe}</span>
+          </div>
+        </div>
+      </div>
+      <div class="spot-desc">${spot.desc}</div>
+      <div class="spot-tags">${spot.tags.slice(0,3).map(t=>`<span class="spot-tag">${t}</span>`).join("")}</div>
+    `;
+    card.addEventListener("click", () => selectSpot(spot.id));
+    list.appendChild(card);
+  });
+}
+
+// Build a decorative botanical SVG icon for the spot category
+function buildSpotSVG(cat, colour) {
+  const paths = {
+    cafe:   `<circle cx="17" cy="7" r="4" fill="${colour}" opacity="0.15"/><path d="M18 8h1a4 4 0 0 1 0 8h-1" stroke="${colour}" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z" stroke="${colour}" stroke-width="1.8" fill="${colour}" fill-opacity="0.1" stroke-linecap="round"/><line x1="6" y1="1" x2="6" y2="4" stroke="${colour}" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="1" x2="10" y2="4" stroke="${colour}" stroke-width="1.5" stroke-linecap="round"/><line x1="14" y1="1" x2="14" y2="4" stroke="${colour}" stroke-width="1.5" stroke-linecap="round"/>`,
+    park:   `<path d="M12 22V13" stroke="${colour}" stroke-width="1.8" stroke-linecap="round"/><ellipse cx="12" cy="9" rx="6" ry="5" fill="${colour}" fill-opacity="0.18" stroke="${colour}" stroke-width="1.6"/><ellipse cx="12" cy="6" rx="4" ry="3.5" fill="${colour}" fill-opacity="0.25" stroke="${colour}" stroke-width="1.3"/><line x1="6" y1="22" x2="18" y2="22" stroke="${colour}" stroke-width="1.8" stroke-linecap="round"/>`,
+    art:    `<circle cx="12" cy="12" r="9" fill="${colour}" fill-opacity="0.1" stroke="${colour}" stroke-width="1.6"/><circle cx="12" cy="12" r="3" fill="${colour}" fill-opacity="0.4" stroke="${colour}" stroke-width="1.4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M16.9 16.9l1.4 1.4M5.6 18.4l1.4-1.4M16.9 7.1l1.4-1.4" stroke="${colour}" stroke-width="1.3" stroke-linecap="round"/>`,
+    bar:    `<path d="M8 2h8l1 7H7L8 2z" fill="${colour}" fill-opacity="0.18" stroke="${colour}" stroke-width="1.6"/><path d="M7 9a5 5 0 0 0 10 0" stroke="${colour}" stroke-width="1.6" fill="none"/><line x1="12" y1="14" x2="12" y2="20" stroke="${colour}" stroke-width="1.8" stroke-linecap="round"/><line x1="8" y1="20" x2="16" y2="20" stroke="${colour}" stroke-width="1.8" stroke-linecap="round"/>`,
+    market: `<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" fill="${colour}" fill-opacity="0.12" stroke="${colour}" stroke-width="1.6"/><line x1="3" y1="6" x2="21" y2="6" stroke="${colour}" stroke-width="1.6"/><path d="M16 10a4 4 0 0 1-8 0" stroke="${colour}" stroke-width="1.6" fill="none"/>`
+  };
+  return `<svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">${paths[cat] || paths.bar}</svg>`;
+}
+
+// ─── Select spot ─────────────────────────────────────────────────────────────
+function selectSpot(id) {
+  const prev = activeSpotId;
+  activeSpotId = id;
+
+  // Update marker icons
+  if (prev && markers[prev]) markers[prev].setIcon(buildMarkerIcon(SPOTS.find(s=>s.id===prev), false));
+  if (markers[id]) {
+    markers[id].setIcon(buildMarkerIcon(SPOTS.find(s=>s.id===id), true));
+    markers[id].openPopup();
+  }
+
+  // Pan map
+  const spot = SPOTS.find(s => s.id === id);
+  if (spot) map.panTo([spot.lat, spot.lng], { animate: true, duration: 0.6 });
+
+  // Show drawer
+  openDrawer(spot);
+
+  // Re-render list to update active state
+  renderList();
+
+  // Scroll card into view
+  setTimeout(() => {
+    const card = document.querySelector(`.spot-card[data-id="${id}"]`);
+    if (card) card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, 50);
+}
+
+// ─── Detail Drawer ────────────────────────────────────────────────────────────
+function openDrawer(spot) {
+  if (!spot) return;
+  const meta = CAT_META[spot.cat];
+
+  document.getElementById("detail-category-bar").innerHTML =
+    `<svg width="12" height="12" viewBox="0 0 24 24" fill="${meta.colour}" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="6"/></svg>
+     <span style="color:${meta.colour};font-weight:600;font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;">${meta.label}</span>
+     <span style="color:rgba(26,18,9,0.4)">·</span>
+     <span style="font-style:italic;color:rgba(26,18,9,0.55)">${spot.vibe}</span>`;
+
+  document.getElementById("detail-name").textContent = spot.name;
+  document.getElementById("detail-address").textContent = spot.address;
+  document.getElementById("detail-desc").textContent = spot.desc;
+  document.getElementById("detail-tags").innerHTML =
+    spot.tags.map(t => `<span class="detail-badge">${t}</span>`).join("");
+  document.getElementById("detail-hours").innerHTML = `
+    <div class="detail-stat">
+      <div class="detail-stat-label">Hours</div>
+      <div class="detail-stat-value">${spot.hours}</div>
+    </div>
+    <div class="detail-stat">
+      <div class="detail-stat-label">Open</div>
+      <div class="detail-stat-value">${spot.days}</div>
+    </div>`;
+
+  document.getElementById("detail-drawer").classList.add("open");
+}
+
+document.getElementById("detail-close").addEventListener("click", () => {
+  document.getElementById("detail-drawer").classList.remove("open");
+  if (activeSpotId && markers[activeSpotId]) {
+    markers[activeSpotId].setIcon(buildMarkerIcon(SPOTS.find(s=>s.id===activeSpotId), false));
+    markers[activeSpotId].closePopup();
+  }
+  activeSpotId = null;
+  renderList();
+});
+
+// ─── Category filter ──────────────────────────────────────────────────────────
+document.querySelectorAll(".cat-pill").forEach(pill => {
+  pill.addEventListener("click", () => {
+    document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+    pill.classList.add("active");
+    activeFilter = pill.dataset.cat;
+    renderList();
+  });
+});
+
+// ─── Search ───────────────────────────────────────────────────────────────────
+document.getElementById("search-input").addEventListener("input", e => {
+  searchQuery = e.target.value;
+  renderList();
+});
+
+// ─── Map click deselects ─────────────────────────────────────────────────────
+map.on("click", () => {
+  document.getElementById("detail-drawer").classList.remove("open");
+  if (activeSpotId && markers[activeSpotId]) {
+    markers[activeSpotId].setIcon(buildMarkerIcon(SPOTS.find(s=>s.id===activeSpotId), false));
+  }
+  activeSpotId = null;
+  renderList();
+});
+
+// ─── Initial render ───────────────────────────────────────────────────────────
+renderList();
+
+// Select first spot on load for a warm welcome
+setTimeout(() => selectSpot(1), 600);
+</script>
+</body>
+</html>
