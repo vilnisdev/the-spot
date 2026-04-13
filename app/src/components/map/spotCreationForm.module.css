@@ -574,7 +574,7 @@
 @media (max-width: 580px) {
   .inner {
     grid-template-columns: 1fr;
-    padding: 20px 16px 28px;
+    padding: 52px 16px 28px; /* top clears the absolute-positioned closeBtn (top:12 + h:28 + gap:12) */
     gap: 16px;
   }
 
