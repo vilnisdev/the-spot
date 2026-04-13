@@ -275,14 +275,15 @@ L.divIcon({ html: svgString, className: '', iconSize: [24, 32], iconAnchor: [12,
 
 ## 7. Border-Radius Convention
 
-| Element type | Radius | Rationale |
+**Global token:** `--radius: 3px` (defined in `globals.css` `:root`)
+
+A global CSS rule applies `border-radius: var(--radius)` to all `button`, `input`, `textarea`, and `select` elements. No per-component overrides needed for interactive controls.
+
+| Surface | Radius | How applied |
 |---|---|---|
-| Full-surface containers (panels, forms, overlays, upload zone) | `0px` | Hard editorial corners |
-| Small interactive controls (filter buttons, hamburger, discard/action sub-buttons) | `3px` | Subtle softening without rounding |
-| Tag-style pills (network pills, future tag chips) | `0px` | Stamp/label aesthetic |
-| Primary action buttons (Save Spot, Cancel) | `0px` | Stamp aesthetic |
-| Add Spot button | `0px` | Stamp aesthetic |
-| Theme toggle track only | `22px` (pill) | Toggle affordance exception |
+| Buttons, inputs, textareas, selects | `3px` | Global rule via `--radius` |
+| Full-surface containers (panels, forms, overlays, upload zone) | `0px` | Default — no rule applied to divs |
+| Theme toggle track | `22px` (pill) | Explicit override — affordance exception |
 
 ---
 
