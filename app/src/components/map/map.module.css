@@ -49,6 +49,7 @@
 .mapWrap {
   flex: 1;
   position: relative;
+  z-index: 1; /* stacking context boundary — keeps Leaflet panes from escaping */
 }
 
 .mapWrap :global(.leaflet-container) {
