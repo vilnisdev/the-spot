@@ -65,7 +65,7 @@ export default function MapView({ spots }: MapViewProps) {
   const center = centroid(spots)
 
   return (
-    <MapContainer center={center} zoom={spots.length > 0 ? 10 : 3} style={{ width: '100%', height: '100%' }}>
+    <MapContainer center={center} zoom={spots.length > 0 ? 10 : 3} style={{ width: '100%', height: '100%' }} zoomControl={false} attributionControl={false}>
       <TileLayer
         key={dark ? 'dark' : 'light'}
         url={dark ? STADIA_DARK_TILE : OSM_TILE}

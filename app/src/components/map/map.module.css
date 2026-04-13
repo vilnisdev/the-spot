@@ -110,6 +110,24 @@
   fill: var(--accent);
 }
 
+.menuBtn {
+  display: none;
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 1001;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  cursor: pointer;
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
 /* ── Mobile ── */
 @media (max-width: 580px) {
   .panel {
@@ -129,22 +147,4 @@
   .menuBtn {
     display: flex;
   }
-}
-
-.menuBtn {
-  display: none;
-  position: absolute;
-  top: 12px;
-  left: 12px;
-  z-index: 1001;
-  width: 40px;
-  height: 40px;
-  align-items: center;
-  justify-content: center;
-  background: var(--panel-bg);
-  border: 1px solid var(--rule);
-  border-radius: 3px;
-  cursor: pointer;
-  color: var(--ink);
-  font-size: 1.2rem;
 }
