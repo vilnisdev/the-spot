@@ -22,6 +22,8 @@ export async function registerAction(
     return { error: 'All fields are required.' }
   }
 
+  const inviteToken = formData.get('invite_token') as string | null
+
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase.auth.signUp({
     email,
@@ -30,6 +32,12 @@ export async function registerAction(
   })
 
   if (error) return { error: error.message }
+
+  if (inviteToken) {
+    const { data: networkId } = await supabase.rpc('join_by_token', { p_token: inviteToken })
+    if (networkId) redirect(`/networks/${networkId}`)
+  }
+
   redirect('/')
 }
 

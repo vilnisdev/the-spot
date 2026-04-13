@@ -74,6 +74,21 @@ export async function seedMembership(userId: string, networkId: string, role = '
   if (error) throw new Error(`seedMembership failed: ${error.message}`)
 }
 
+/** Seed an invitation for a network via admin; returns { id, token } */
+export async function seedInvitation(
+  networkId: string,
+  createdBy: string,
+  overrides: Record<string, unknown> = {}
+) {
+  const { data, error } = await admin
+    .from('invitations')
+    .insert({ network_id: networkId, created_by: createdBy, ...overrides })
+    .select('id, token')
+    .single()
+  if (error) throw new Error(`seedInvitation failed: ${error.message}`)
+  return { id: data.id as string, token: data.token as string }
+}
+
 /** Seed a spot + spot_networks entry via admin */
 export async function seedSpot(
   authorId: string,
