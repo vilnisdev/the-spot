@@ -6,6 +6,8 @@ import {
   leaveNetworkAction,
   removeMemberAction,
 } from '@/app/actions/networks'
+import { revokeInvitationAction } from '@/app/actions/invitations'
+import GenerateInviteForm from './generate-invite-form'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -41,6 +43,14 @@ export default async function NetworkDetailPage({ params }: Props) {
     .eq('network_id', id)
     .order('role', { ascending: false }) // 'owner' before 'member'
 
+  const { data: activeInvitations } = await supabase
+    .from('invitations')
+    .select('id, token, expires_at, created_at')
+    .eq('network_id', id)
+    .gt('expires_at', new Date().toISOString())
+    .is('revoked_at', null)
+    .order('created_at', { ascending: false })
+
   const members = (membersRaw ?? []) as unknown as MemberRow[]
   const isOwner = network.owner_id === user!.id
 
@@ -70,6 +80,28 @@ export default async function NetworkDetailPage({ params }: Props) {
           </form>
         </section>
       )}
+
+      <section>
+        <h2>Invite Members</h2>
+        <GenerateInviteForm networkId={id} />
+        {isOwner && activeInvitations && activeInvitations.length > 0 && (
+          <div>
+            <h3>Active invite links</h3>
+            <ul>
+              {activeInvitations.map((inv) => (
+                <li key={inv.id}>
+                  <span>Expires: {new Date(inv.expires_at).toLocaleDateString()}</span>
+                  <form action={revokeInvitationAction} style={{ display: 'inline', marginLeft: '0.5rem' }}>
+                    <input type="hidden" name="invitation_id" value={inv.id} />
+                    <input type="hidden" name="network_id" value={id} />
+                    <button type="submit">Revoke</button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </section>
 
       <section>
         <h2>Members</h2>

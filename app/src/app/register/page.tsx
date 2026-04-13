@@ -1,10 +1,15 @@
 import RegisterForm from './register-form'
 
-export default function RegisterPage() {
+interface Props {
+  searchParams: Promise<{ token?: string }>
+}
+
+export default async function RegisterPage({ searchParams }: Props) {
+  const { token } = await searchParams
   return (
     <main>
       <h1>Create account</h1>
-      <RegisterForm />
+      <RegisterForm inviteToken={token} />
       <p>
         Already have an account? <a href="/login">Log in</a>
       </p>
