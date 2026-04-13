@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -27,6 +27,7 @@ interface MapViewProps {
   dropMode: boolean
   provisionalPin: LatLng | null
   onDrop: (latlng: LatLng) => void
+  onSpotClick: (spot: Spot) => void
 }
 
 const OSM_TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -86,7 +87,7 @@ function DropHandler({ dropMode, onDrop }: { dropMode: boolean; onDrop: (latlng:
   return null
 }
 
-export default function MapView({ spots, dropMode, provisionalPin, onDrop }: MapViewProps) {
+export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpotClick }: MapViewProps) {
   const [dark, setDark] = useState(false)
 
   useEffect(() => {
@@ -109,9 +110,12 @@ export default function MapView({ spots, dropMode, provisionalPin, onDrop }: Map
       />
       <DropHandler dropMode={dropMode} onDrop={handleDrop} />
       {spots.map((spot) => (
-        <Marker key={spot.id} position={[spot.lat, spot.lng]} icon={makePinIcon('saved')}>
-          <Popup>{spot.title}</Popup>
-        </Marker>
+        <Marker
+          key={spot.id}
+          position={[spot.lat, spot.lng]}
+          icon={makePinIcon('saved')}
+          eventHandlers={{ click: () => onSpotClick(spot) }}
+        />
       ))}
       {provisionalPin && (
         <Marker
