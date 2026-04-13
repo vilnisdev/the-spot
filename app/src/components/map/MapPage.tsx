@@ -129,7 +129,14 @@ export default function MapPage({ spots: initialSpots, networks, username }: Map
       </aside>
 
       <div className={styles.mapWrap}>
-        {/* Drop mode banner */}
+        <MapView
+          spots={visibleSpots}
+          dropMode={dropMode}
+          provisionalPin={provisionalPin}
+          onDrop={handleDrop}
+        />
+
+        {/* Drop mode banner — rendered after MapView so it sits above in DOM */}
         {dropMode && (
           <div className={formStyles.dropBanner} role="status">
             <span>Click the map to place your spot — Esc to cancel</span>
@@ -154,13 +161,6 @@ export default function MapPage({ spots: initialSpots, networks, username }: Map
         >
           + Add Spot
         </button>
-
-        <MapView
-          spots={visibleSpots}
-          dropMode={dropMode}
-          provisionalPin={provisionalPin}
-          onDrop={handleDrop}
-        />
       </div>
 
       <SpotCreationForm
