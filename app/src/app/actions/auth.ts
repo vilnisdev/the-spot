@@ -48,6 +48,14 @@ export async function registerAction(
     if (networkId) redirect(`/networks/${networkId}`)
   }
 
+  // No session yet (email confirmation required). If there's an invite token,
+  // tell the user to confirm their email and return to the invite link after.
+  if (inviteToken && !data.session) {
+    return {
+      message: `Check your email for a confirmation link. After confirming, return to ${siteUrl}/invite/${inviteToken} to join the network.`,
+    }
+  }
+
   redirect('/')
 }
 

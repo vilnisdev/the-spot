@@ -36,6 +36,7 @@ export default function RegisterForm({ inviteToken }: Props) {
       </div>
 
       {state?.error && <p role="alert">{state.error}</p>}
+      {state?.message && <p>{state.message}</p>}
 
       <button type="submit" disabled={pending} suppressHydrationWarning>
         {pending ? 'Creating account…' : 'Create account'}
