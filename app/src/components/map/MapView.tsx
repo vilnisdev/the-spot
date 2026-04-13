@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet'
+import { useEffect, useState, useCallback } from 'react'
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -17,8 +17,16 @@ interface Spot {
   spot_networks: SpotNetwork[]
 }
 
+interface LatLng {
+  lat: number
+  lng: number
+}
+
 interface MapViewProps {
   spots: Spot[]
+  dropMode: boolean
+  provisionalPin: LatLng | null
+  onDrop: (latlng: LatLng) => void
 }
 
 const OSM_TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -28,11 +36,20 @@ const STADIA_DARK_TILE = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark
 const STADIA_DARK_ATTRIBUTION =
   '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
-function makePinIcon(active = false): L.DivIcon {
-  const fill = active ? 'var(--accent)' : 'var(--sepia)'
+function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
+  const fill =
+    variant === 'active' ? 'var(--accent)' :
+    variant === 'provisional' ? 'none' :
+    'var(--sepia)'
+  const stroke = variant === 'provisional' ? 'var(--tan)' : 'none'
+  const strokeDasharray = variant === 'provisional' ? '4 3' : 'none'
+  const dotFill = variant === 'provisional' ? 'none' : 'white'
+  const dotOpacity = variant === 'provisional' ? '0' : '0.6'
+
   const svg = `<svg viewBox="0 0 24 32" width="24" height="32" xmlns="http://www.w3.org/2000/svg">
-    <path d="M12 0C6.477 0 2 4.477 2 10c0 7 10 22 10 22S22 17 22 10C22 4.477 17.523 0 12 0z" fill="${fill}"/>
-    <circle cx="12" cy="10" r="4" fill="white" fill-opacity="0.6"/>
+    <path d="M12 0C6.477 0 2 4.477 2 10c0 7 10 22 10 22S22 17 22 10C22 4.477 17.523 0 12 0z"
+      fill="${fill}" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="${strokeDasharray}"/>
+    <circle cx="12" cy="10" r="4" fill="${dotFill}" fill-opacity="${dotOpacity}"/>
   </svg>`
 
   return L.divIcon({
@@ -51,7 +68,25 @@ function centroid(spots: Spot[]): [number, number] {
   return [lat, lng]
 }
 
-export default function MapView({ spots }: MapViewProps) {
+// Manages cursor and click events inside the Leaflet context
+function DropHandler({ dropMode, onDrop }: { dropMode: boolean; onDrop: (latlng: LatLng) => void }) {
+  const map = useMapEvents({
+    click(e) {
+      if (dropMode) {
+        onDrop({ lat: e.latlng.lat, lng: e.latlng.lng })
+      }
+    },
+  })
+
+  useEffect(() => {
+    const container = map.getContainer()
+    container.style.cursor = dropMode ? 'crosshair' : ''
+  }, [dropMode, map])
+
+  return null
+}
+
+export default function MapView({ spots, dropMode, provisionalPin, onDrop }: MapViewProps) {
   const [dark, setDark] = useState(false)
 
   useEffect(() => {
@@ -62,6 +97,7 @@ export default function MapView({ spots }: MapViewProps) {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
+  const handleDrop = useCallback(onDrop, [onDrop])
   const center = centroid(spots)
 
   return (
@@ -71,11 +107,20 @@ export default function MapView({ spots }: MapViewProps) {
         url={dark ? STADIA_DARK_TILE : OSM_TILE}
         attribution={dark ? STADIA_DARK_ATTRIBUTION : OSM_ATTRIBUTION}
       />
+      <DropHandler dropMode={dropMode} onDrop={handleDrop} />
       {spots.map((spot) => (
-        <Marker key={spot.id} position={[spot.lat, spot.lng]} icon={makePinIcon()}>
+        <Marker key={spot.id} position={[spot.lat, spot.lng]} icon={makePinIcon('saved')}>
           <Popup>{spot.title}</Popup>
         </Marker>
       ))}
+      {provisionalPin && (
+        <Marker
+          key="provisional"
+          position={[provisionalPin.lat, provisionalPin.lng]}
+          icon={makePinIcon('provisional')}
+          interactive={false}
+        />
+      )}
     </MapContainer>
   )
 }
