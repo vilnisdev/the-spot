@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
+import SpotModal, { type SpotForModal } from './SpotModal'
 import type { CreatedSpot } from '@/app/actions/spots'
 import styles from './map.module.css'
 import formStyles from './spotCreationForm.module.css'
@@ -42,6 +43,26 @@ interface MapPageProps {
   networks: Network[]
 }
 
+// ---------------------------------------------------------------------------
+// Prototype mock data — replaced by real DB fetch in issue #10
+// ---------------------------------------------------------------------------
+const MOCK_SPOT_DETAIL: Partial<SpotForModal> = {
+  description: "Found a dense patch of chanterelles just off the main trail. Soil was damp from last week's rain. Birdsong was constant — mostly thrush. Worth returning in late September. #mushrooms #chanterelles #foraging",
+  state: "Oregon",
+  date: "April 12, 2026",
+  author: "vilnis",
+  tags: ["mushrooms", "chanterelles", "foraging"],
+  media: [
+    { type: 'image', url: '/mock/chanterelle-1.jpg' },
+    { type: 'image', url: '/mock/chanterelle-2.jpg' },
+    { type: 'audio', url: '/mock/birdsong.mp3', name: 'birdsong.mp3' },
+  ],
+  comments: [
+    { id: '1', author: 'ada', body: "I was there last week too — whole area smells incredible right now.", date: "April 11, 2026" },
+    { id: '2', author: 'reed', body: "Any morels nearby? Hoping the weather holds.", date: "April 12, 2026" },
+  ],
+}
+
 export default function MapPage({ spots: initialSpots, networks }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -51,6 +72,7 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
   const [provisionalPin, setProvisionalPin] = useState<LatLng | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
+  const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -105,6 +127,10 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
           s.spot_networks.some((sn) => sn.network_id === selectedNetworkId)
         )
 
+  const modalSpot: SpotForModal | null = selectedSpot
+    ? { ...selectedSpot, ...MOCK_SPOT_DETAIL }
+    : null
+
   return (
     <div className={styles.layout}>
       {/* Fixed button on map — shown only after panel fully slides out */}
@@ -151,6 +177,7 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
           dropMode={dropMode}
           provisionalPin={provisionalPin}
           onDrop={handleDrop}
+          onSpotClick={setSelectedSpot}
         />
       </div>
 
@@ -186,6 +213,14 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
         networks={networks}
         onSave={handleSave}
         onCancel={handleCancel}
+      />
+
+      <SpotModal
+        spot={modalSpot}
+        isAuthor={true}
+        onClose={() => setSelectedSpot(null)}
+        onEdit={() => { /* stub — wired in issue #10 */ }}
+        onDelete={() => { /* stub — wired in issue #10 */ }}
       />
     </div>
   )
