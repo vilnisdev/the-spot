@@ -64,6 +64,7 @@ export default async function NetworkDetailPage({ params }: Props) {
               type="text"
               defaultValue={network.name}
               required
+              suppressHydrationWarning
             />
             <button type="submit">Save</button>
           </form>
