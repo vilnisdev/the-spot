@@ -40,10 +40,9 @@ interface LatLng {
 interface MapPageProps {
   spots: Spot[]
   networks: Network[]
-  username: string
 }
 
-export default function MapPage({ spots: initialSpots, networks, username }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [liveSpots, setLiveSpots] = useState<Spot[]>(initialSpots)
@@ -135,39 +134,38 @@ export default function MapPage({ spots: initialSpots, networks, username }: Map
           provisionalPin={provisionalPin}
           onDrop={handleDrop}
         />
-
-        {/* Drop mode banner — rendered after MapView so it sits above in DOM */}
-        {dropMode && (
-          <div className={formStyles.dropBanner} role="status">
-            <span>Click the map to place your spot — Esc to cancel</span>
-            <button
-              type="button"
-              className={formStyles.dropBannerClose}
-              onClick={exitDropMode}
-              aria-label="Cancel drop mode"
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {/* Add Spot button */}
-        <button
-          type="button"
-          className={`${formStyles.addSpotBtn} ${dropMode ? formStyles.addSpotBtnActive : ''}`}
-          onClick={dropMode ? exitDropMode : enterDropMode}
-          aria-label={dropMode ? 'Cancel adding spot' : 'Add a new spot'}
-          aria-pressed={dropMode}
-        >
-          + Add Spot
-        </button>
       </div>
+
+      {/* Drop mode banner — at layout level, outside mapWrap stacking context */}
+      {dropMode && (
+        <div className={formStyles.dropBanner} role="status">
+          <span>Click the map to place your spot — Esc to cancel</span>
+          <button
+            type="button"
+            className={formStyles.dropBannerClose}
+            onClick={exitDropMode}
+            aria-label="Cancel drop mode"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Add Spot button — at layout level, outside mapWrap stacking context */}
+      <button
+        type="button"
+        className={`${formStyles.addSpotBtn} ${dropMode ? formStyles.addSpotBtnActive : ''}`}
+        onClick={dropMode ? exitDropMode : enterDropMode}
+        aria-label={dropMode ? 'Cancel adding spot' : 'Add a new spot'}
+        aria-pressed={dropMode}
+      >
+        + Add Spot
+      </button>
 
       <SpotCreationForm
         open={formOpen}
         latlng={droppedLatLng}
         networks={networks}
-        username={username}
         onSave={handleSave}
         onCancel={handleCancel}
       />

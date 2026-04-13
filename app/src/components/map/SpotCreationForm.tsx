@@ -19,7 +19,6 @@ interface Props {
   open: boolean
   latlng: LatLng | null
   networks: Network[]
-  username: string
   onSave: (spot: CreatedSpot) => void
   onCancel: () => void
 }
@@ -43,7 +42,6 @@ export default function SpotCreationForm({
   open,
   latlng,
   networks,
-  username,
   onSave,
   onCancel,
 }: Props) {
@@ -52,6 +50,7 @@ export default function SpotCreationForm({
   const descRef = useRef<HTMLTextAreaElement>(null)
 
   const [pending, setPending] = useState(false)
+  const [exiting, setExiting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [titleError, setTitleError] = useState(false)
   const [networkError, setNetworkError] = useState(false)
@@ -121,6 +120,16 @@ export default function SpotCreationForm({
     }
   }
 
+  useEffect(() => {
+    if (!open) return
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') attemptCancel()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, dirty])
+
   async function uploadMedia(spotId: string) {
     if (files.length === 0) return
     const supabase = createSupabaseBrowserClient()
@@ -181,13 +190,14 @@ export default function SpotCreationForm({
     await uploadMedia(result.spot.id)
 
     setPending(false)
-    onSave(result.spot)
+    setExiting(true)
+    setTimeout(() => onSave(result.spot), 750)
   }
 
   if (!open) return null
 
   return (
-    <div className={styles.overlay} role="dialog" aria-modal="true" aria-label="Create a new spot">
+    <div className={`${styles.overlay} ${exiting ? styles.overlayExiting : ''}`} role="dialog" aria-modal="true" aria-label="Create a new spot">
       <button
         className={styles.closeBtn}
         onClick={attemptCancel}
@@ -257,10 +267,9 @@ export default function SpotCreationForm({
               <p className={styles.fieldError}>Select at least one network.</p>
             )}
 
-            {/* Auto-fill: date + author */}
+            {/* Auto-fill: date */}
             <div className={styles.autofill}>
               <AutofillItem label="Date" value={date} />
-              <AutofillItem label="Author" value={username} />
             </div>
 
             {/* Discard banner */}
@@ -283,9 +292,6 @@ export default function SpotCreationForm({
             <div className={styles.actions}>
               <button type="submit" className={styles.btnPrimary} disabled={pending}>
                 {pending ? 'Saving…' : 'Save Spot'}
-              </button>
-              <button type="button" className={styles.btnGhost} onClick={attemptCancel} disabled={pending}>
-                Cancel
               </button>
             </div>
           </div>
@@ -360,7 +366,6 @@ function UploadZone({ files, onAdd, onRemove }: UploadZoneProps) {
             <circle cx="12" cy="13" r="4"/>
           </svg>
           <p className={styles.uploadLabel}>Attach photographs</p>
-          <p className={styles.uploadHint}>drag &amp; drop or click to browse</p>
         </div>
       ) : (
         <div className={styles.thumbGrid} onClick={(e) => e.stopPropagation()}>

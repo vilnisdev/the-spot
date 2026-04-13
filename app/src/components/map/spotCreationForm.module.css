@@ -5,7 +5,7 @@
   left: 0;
   right: 0;
   max-height: 72vh;
-  z-index: 300;
+  z-index: 8000;
   background: var(--modal-bg);
   border-top: 1px solid var(--rule);
   overflow-y: auto;
@@ -16,6 +16,15 @@
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(0); }
+  to   { transform: translateY(100%); }
+}
+
+.overlayExiting {
+  animation: slideDown 750ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* ── Close button ── */
@@ -182,7 +191,8 @@
   background: var(--tan-light);
 }
 
-.networkPillSelected {
+.networkPillSelected,
+.networkPillSelected:hover {
   background: var(--ink);
   border-color: var(--ink);
   color: var(--paper);
@@ -497,10 +507,10 @@
 
 /* ── Add Spot button ── */
 .addSpotBtn {
-  position: absolute;
+  position: fixed;
   bottom: 28px;
   right: 24px;
-  z-index: 1001;
+  z-index: 500;
   font-family: var(--font-body);
   font-size: 0.72rem;
   font-weight: 300;
@@ -526,11 +536,11 @@
 
 /* ── Drop mode banner ── */
 .dropBanner {
-  position: absolute;
+  position: fixed;
   top: 12px;
-  left: 50%;
+  left: calc(50% + var(--panel-w) / 2); /* centres in mapWrap area; --panel-w from .layout */
   transform: translateX(-50%);
-  z-index: 1001;
+  z-index: 500;
   display: flex;
   align-items: center;
   gap: 10px;
