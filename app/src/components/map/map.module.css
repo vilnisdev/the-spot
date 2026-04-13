@@ -1,5 +1,5 @@
 .layout {
-  --panel-w: 300px; /* matches .panel width — used to centre dropBanner in mapWrap */
+  --panel-w: 0px; /* panel is always off-canvas; dropBanner centres in full viewport */
   position: relative;
   width: 100%;
   height: 100vh;
@@ -9,20 +9,33 @@
 
 /* ── Side Panel ── */
 .panel {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
   z-index: 1000;
   width: 300px;
-  flex-shrink: 0;
   display: flex;
   flex-direction: column;
   background: var(--panel-bg);
   border-right: 1px solid var(--rule);
   overflow-y: auto;
+  transform: translateX(-100%);
+  transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .panelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   padding: 24px 20px 12px;
   border-bottom: 1px solid var(--rule);
+}
+
+/* When menuBtn sits inside the panel header it must not be fixed */
+.panelHeader .menuBtn {
+  position: static;
+  flex-shrink: 0;
 }
 
 .panelTitle {
@@ -112,7 +125,7 @@
 }
 
 .menuBtn {
-  display: none;
+  display: flex;
   position: fixed;
   top: 12px;
   left: 12px;
@@ -128,27 +141,13 @@
   font-size: 1.2rem;
 }
 
+.panelOpen {
+  transform: translateX(0);
+}
+
 /* ── Mobile ── */
 @media (max-width: 580px) {
-  .layout {
-    --panel-w: 0px; /* panel is off-canvas; dropBanner centres in full viewport */
-  }
-
   .panel {
-    position: absolute;
-    top: 0;
-    left: 0;
-    bottom: 0;
     width: 100%;
-    transform: translateX(-100%);
-    transition: transform 600ms cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .panelOpen {
-    transform: translateX(0);
-  }
-
-  .menuBtn {
-    display: flex;
   }
 }

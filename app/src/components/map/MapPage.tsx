@@ -45,6 +45,7 @@ interface MapPageProps {
 export default function MapPage({ spots: initialSpots, networks }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [panelFullyClosed, setPanelFullyClosed] = useState(true)
   const [liveSpots, setLiveSpots] = useState<Spot[]>(initialSpots)
   const [dropMode, setDropMode] = useState(false)
   const [provisionalPin, setProvisionalPin] = useState<LatLng | null>(null)
@@ -64,7 +65,8 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
 
   function enterDropMode() {
     setDropMode(true)
-    setPanelOpen(false)
+    if (panelOpen) setPanelOpen(false)
+    // panelFullyClosed will be set true via onTransitionEnd
   }
 
   function exitDropMode() {
@@ -105,17 +107,33 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
 
   return (
     <div className={styles.layout}>
-      <button
-        className={styles.menuBtn}
-        onClick={() => setPanelOpen((v) => !v)}
-        aria-label="Toggle network panel"
-      >
-        ☰
-      </button>
+      {/* Fixed button on map — shown only after panel fully slides out */}
+      {panelFullyClosed && (
+        <button
+          className={styles.menuBtn}
+          onClick={() => { setPanelOpen(true); setPanelFullyClosed(false) }}
+          aria-label="Open network panel"
+        >
+          ☰
+        </button>
+      )}
 
-      <aside className={`${styles.panel} ${panelOpen ? styles.panelOpen : ''}`}>
+      <aside
+        className={`${styles.panel} ${panelOpen ? styles.panelOpen : ''}`}
+        onTransitionEnd={(e) => {
+          if (e.propertyName === 'transform' && !panelOpen) setPanelFullyClosed(true)
+        }}
+      >
         <div className={styles.panelHeader}>
           <span className={styles.panelTitle}>The Spot</span>
+          {/* Inline button inside panel header — visible when panel is open */}
+          <button
+            className={styles.menuBtn}
+            onClick={() => setPanelOpen(false)}
+            aria-label="Close network panel"
+          >
+            ☰
+          </button>
         </div>
         <div className={styles.panelSection}>
           <p className={styles.panelLabel}>Networks</p>
