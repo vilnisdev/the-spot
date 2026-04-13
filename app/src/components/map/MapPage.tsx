@@ -1,9 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
+import SpotCreationForm from './SpotCreationForm'
+import type { CreatedSpot } from '@/app/actions/spots'
 import styles from './map.module.css'
+import formStyles from './spotCreationForm.module.css'
 
 const MapView = dynamic(() => import('./MapView'), {
   ssr: false,
@@ -29,19 +32,75 @@ interface Network {
   name: string
 }
 
+interface LatLng {
+  lat: number
+  lng: number
+}
+
 interface MapPageProps {
   spots: Spot[]
   networks: Network[]
+  username: string
 }
 
-export default function MapPage({ spots, networks }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks, username }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
+  const [liveSpots, setLiveSpots] = useState<Spot[]>(initialSpots)
+  const [dropMode, setDropMode] = useState(false)
+  const [provisionalPin, setProvisionalPin] = useState<LatLng | null>(null)
+  const [formOpen, setFormOpen] = useState(false)
+  const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
+
+  // Esc exits drop mode
+  useEffect(() => {
+    if (!dropMode) return
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === 'Escape') exitDropMode()
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dropMode])
+
+  function enterDropMode() {
+    setDropMode(true)
+    setPanelOpen(false)
+  }
+
+  function exitDropMode() {
+    setDropMode(false)
+    setProvisionalPin(null)
+    setFormOpen(false)
+    setDroppedLatLng(null)
+  }
+
+  const handleDrop = useCallback((latlng: LatLng) => {
+    setProvisionalPin(latlng)
+    setDroppedLatLng(latlng)
+    setDropMode(false)
+    setFormOpen(true)
+  }, [])
+
+  function handleSave(spot: CreatedSpot) {
+    setLiveSpots((prev) => [...prev, spot])
+    setProvisionalPin(null)
+    setFormOpen(false)
+    setDroppedLatLng(null)
+    setDropMode(false)
+  }
+
+  function handleCancel() {
+    setProvisionalPin(null)
+    setFormOpen(false)
+    setDroppedLatLng(null)
+    setDropMode(false)
+  }
 
   const visibleSpots =
     selectedNetworkId === null
-      ? spots
-      : spots.filter((s) =>
+      ? liveSpots
+      : liveSpots.filter((s) =>
           s.spot_networks.some((sn) => sn.network_id === selectedNetworkId)
         )
 
@@ -70,8 +129,48 @@ export default function MapPage({ spots, networks }: MapPageProps) {
       </aside>
 
       <div className={styles.mapWrap}>
-        <MapView spots={visibleSpots} />
+        {/* Drop mode banner */}
+        {dropMode && (
+          <div className={formStyles.dropBanner} role="status">
+            <span>Click the map to place your spot — Esc to cancel</span>
+            <button
+              type="button"
+              className={formStyles.dropBannerClose}
+              onClick={exitDropMode}
+              aria-label="Cancel drop mode"
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        {/* Add Spot button */}
+        <button
+          type="button"
+          className={`${formStyles.addSpotBtn} ${dropMode ? formStyles.addSpotBtnActive : ''}`}
+          onClick={dropMode ? exitDropMode : enterDropMode}
+          aria-label={dropMode ? 'Cancel adding spot' : 'Add a new spot'}
+          aria-pressed={dropMode}
+        >
+          + Add Spot
+        </button>
+
+        <MapView
+          spots={visibleSpots}
+          dropMode={dropMode}
+          provisionalPin={provisionalPin}
+          onDrop={handleDrop}
+        />
       </div>
+
+      <SpotCreationForm
+        open={formOpen}
+        latlng={droppedLatLng}
+        networks={networks}
+        username={username}
+        onSave={handleSave}
+        onCancel={handleCancel}
+      />
     </div>
   )
 }
