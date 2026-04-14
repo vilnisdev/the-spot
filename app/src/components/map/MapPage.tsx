@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import type L from 'leaflet'
 import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
 import SpotModal, { type SpotForModal } from './SpotModal'
 import SpotEditForm from './SpotEditForm'
+import MapSearchBar from './MapSearchBar'
 import {
   getSpotDetailAction,
   postCommentAction,
   deleteSpotAction,
   type CreatedSpot,
+  type SearchSpotResult,
 } from '@/app/actions/spots'
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser'
 import styles from './map.module.css'
@@ -66,6 +69,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
+
+  // Map instance ref for programmatic flyTo
+  const mapRef = useRef<L.Map | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -157,6 +163,17 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setFormOpen(false)
     setDroppedLatLng(null)
     setDropMode(false)
+  }
+
+  // ── Map ref callbacks ──
+
+  function handleMapReady(map: L.Map) {
+    mapRef.current = map
+  }
+
+  function handleSearchSelect(result: SearchSpotResult) {
+    mapRef.current?.flyTo([result.lat, result.lng], 15, { animate: true, duration: 1 })
+    handleSpotClick({ id: result.id, title: result.title, lat: result.lat, lng: result.lng, spot_networks: [] })
   }
 
   // ── Spot modal interactions ──
@@ -269,7 +286,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           provisionalPin={provisionalPin}
           onDrop={handleDrop}
           onSpotClick={handleSpotClick}
+          onMapReady={handleMapReady}
         />
+        <MapSearchBar onSelectSpot={handleSearchSelect} />
       </div>
 
       {/* Drop mode banner */}
