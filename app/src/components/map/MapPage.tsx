@@ -155,9 +155,11 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
                     month: 'long', day: 'numeric', year: 'numeric',
                   }),
                 }
-                setSpotDetail((p) =>
-                  p ? { ...p, comments: [...(p.comments ?? []), comment] } : p
-                )
+                setSpotDetail((p) => {
+                  if (!p) return p
+                  if (p.comments?.some((c) => c.id === comment.id)) return p
+                  return { ...p, comments: [...(p.comments ?? []), comment] }
+                })
               })
             return prev
           })
