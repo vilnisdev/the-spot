@@ -12,6 +12,7 @@ import {
   deleteSpotAction,
   type CreatedSpot,
 } from '@/app/actions/spots'
+import { createSupabaseBrowserClient } from '@/lib/supabase/browser'
 import styles from './map.module.css'
 import formStyles from './spotCreationForm.module.css'
 
@@ -76,6 +77,96 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     return () => window.removeEventListener('keydown', handleKey)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropMode])
+
+  // ── Realtime: live pin updates ──
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient()
+    const userNetworkIds = new Set(networks.map((n) => n.id))
+
+    const channel = supabase
+      .channel('live-spots')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'spot_networks' },
+        (payload) => {
+          const { spot_id, network_id } = payload.new as { spot_id: string; network_id: string }
+          if (!userNetworkIds.has(network_id)) return
+          setLiveSpots((prev) => {
+            if (prev.some((s) => s.id === spot_id)) return prev
+            // Spot is already committed when spot_networks fires (same transaction)
+            supabase
+              .from('spots')
+              .select('id, title, lat, lng, spot_networks(network_id)')
+              .eq('id', spot_id)
+              .single()
+              .then(({ data }) => {
+                if (data) {
+                  setLiveSpots((p) => p.some((s) => s.id === data.id) ? p : [...p, data])
+                }
+              })
+            return prev
+          })
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'spots' },
+        (payload) => {
+          const id = (payload.old as { id: string }).id
+          setLiveSpots((prev) => prev.filter((s) => s.id !== id))
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  // networks is stable (SSR prop); no deps needed beyond initial mount
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [networks])
+
+  // ── Realtime: live comment updates ──
+  useEffect(() => {
+    if (!spotDetail) return
+    const supabase = createSupabaseBrowserClient()
+    const spotId = spotDetail.id
+
+    const channel = supabase
+      .channel(`live-comments-${spotId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'comments', filter: `spot_id=eq.${spotId}` },
+        (payload) => {
+          const row = payload.new as { id: string; body: string; created_at: string }
+          setSpotDetail((prev) => {
+            if (!prev) return prev
+            if (prev.comments?.some((c) => c.id === row.id)) return prev
+            // Fetch with author join — payload doesn't include joined columns
+            supabase
+              .from('comments')
+              .select('id, body, created_at, profiles!author_id(username)')
+              .eq('id', row.id)
+              .single()
+              .then(({ data: c }) => {
+                if (!c) return
+                const comment = {
+                  id: c.id,
+                  author: (c.profiles as unknown as { username: string } | null)?.username ?? 'Unknown',
+                  body: c.body,
+                  date: new Date(c.created_at.split('T')[0] + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric',
+                  }),
+                }
+                setSpotDetail((p) =>
+                  p ? { ...p, comments: [...(p.comments ?? []), comment] } : p
+                )
+              })
+            return prev
+          })
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [spotDetail?.id])
 
   function enterDropMode() {
     setDropMode(true)
