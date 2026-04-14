@@ -180,7 +180,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       const zoom = 15
       const modalOffsetPx = window.innerHeight * 0.425
       const targetPx = mapRef.current.project([result.lat, result.lng], zoom)
-      const adjustedPx = targetPx.subtract([0, modalOffsetPx])
+      const adjustedPx = targetPx.add([0, modalOffsetPx])
       const adjustedCenter = mapRef.current.unproject(adjustedPx, zoom)
       mapRef.current.flyTo(adjustedCenter, zoom, { animate: true, duration: 1 })
     }
