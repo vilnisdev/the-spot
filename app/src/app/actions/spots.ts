@@ -1,6 +1,7 @@
 'use server'
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
+import type { SpotForModal, SpotMedia, SpotComment } from '@/components/map/SpotModal'
 
 export interface CreatedSpot {
   id: string
@@ -13,6 +14,14 @@ export interface CreatedSpot {
 export type SpotActionResult =
   | { spot: CreatedSpot; error?: never }
   | { error: string; spot?: never }
+
+export type SpotDetailActionResult =
+  | { spot: SpotForModal; isAuthor: boolean; error?: never }
+  | { error: string; spot?: never }
+
+export type CommentActionResult =
+  | { comment: SpotComment; error?: never }
+  | { error: string; comment?: never }
 
 // ---------------------------------------------------------------------------
 // Reverse-geocode lat/lng → US state name via Nominatim (best-effort).
@@ -41,6 +50,29 @@ function extractTags(text: string | null | undefined): string[] {
   if (!text) return []
   const matches = text.match(/#([a-z0-9][a-z0-9-]*)/gi) ?? []
   return [...new Set(matches.map((t) => t.slice(1).toLowerCase()))]
+}
+
+// ---------------------------------------------------------------------------
+// Parse storage path from a URL or return as-is if already a path.
+// Handles both old format (full publicUrl) and new format (path only).
+// ---------------------------------------------------------------------------
+function parseStoragePath(urlOrPath: string): string {
+  const marker = '/storage/v1/object/public/media/'
+  const idx = urlOrPath.indexOf(marker)
+  if (idx !== -1) return urlOrPath.slice(idx + marker.length)
+  // Also handle signed URL format
+  const signedMarker = '/storage/v1/object/sign/media/'
+  const signedIdx = urlOrPath.indexOf(signedMarker)
+  if (signedIdx !== -1) return urlOrPath.slice(signedIdx + signedMarker.length).split('?')[0]
+  return urlOrPath
+}
+
+function formatDate(isoDate: string): string {
+  return new Date(isoDate + 'T00:00:00').toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -94,4 +126,200 @@ export async function createSpotAction(formData: FormData): Promise<SpotActionRe
       spot_networks: networkIds.map((network_id) => ({ network_id })),
     },
   }
+}
+
+// ---------------------------------------------------------------------------
+// getSpotDetailAction — fetch full spot detail for the modal.
+// ---------------------------------------------------------------------------
+export async function getSpotDetailAction(spotId: string): Promise<SpotDetailActionResult> {
+  const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  // Spot + author
+  const { data: spot, error: spotErr } = await supabase
+    .from('spots')
+    .select('id, title, description, lat, lng, state, date, author_id, profiles!author_id(username)')
+    .eq('id', spotId)
+    .single()
+
+  if (spotErr || !spot) return { error: spotErr?.message ?? 'Spot not found.' }
+
+  // Tags
+  const { data: spotTagRows } = await supabase
+    .from('spot_tags')
+    .select('tags!inner(name)')
+    .eq('spot_id', spotId)
+
+  const tags = (spotTagRows ?? []).map(
+    (row) => (row.tags as unknown as { name: string }).name
+  )
+
+  // Media — generate signed URLs
+  const { data: mediaRows } = await supabase
+    .from('media')
+    .select('id, url, type, name')
+    .eq('spot_id', spotId)
+    .order('created_at')
+
+  const media: SpotMedia[] = []
+  for (const m of mediaRows ?? []) {
+    const path = parseStoragePath(m.url)
+    const { data: signed } = await supabase.storage.from('media').createSignedUrl(path, 3600)
+    media.push({
+      id: m.id,
+      type: m.type as 'image' | 'audio',
+      url: signed?.signedUrl ?? m.url,
+      name: m.name ?? undefined,
+    })
+  }
+
+  // Comments + authors
+  const { data: commentRows } = await supabase
+    .from('comments')
+    .select('id, body, created_at, profiles!author_id(username)')
+    .eq('spot_id', spotId)
+    .order('created_at')
+
+  const comments: SpotComment[] = (commentRows ?? []).map((c) => ({
+    id: c.id,
+    author: (c.profiles as unknown as { username: string } | null)?.username ?? 'Unknown',
+    body: c.body,
+    date: formatDate(c.created_at.split('T')[0]),
+  }))
+
+  // Networks (for edit form pre-selection)
+  const { data: spotNetworks } = await supabase
+    .from('spot_networks')
+    .select('network_id')
+    .eq('spot_id', spotId)
+
+  const author = (spot.profiles as unknown as { username: string } | null)?.username
+
+  return {
+    spot: {
+      id: spot.id,
+      title: spot.title,
+      description: spot.description ?? undefined,
+      lat: spot.lat,
+      lng: spot.lng,
+      state: spot.state ?? undefined,
+      date: spot.date ? formatDate(spot.date) : undefined,
+      author: author ?? undefined,
+      tags,
+      media,
+      comments,
+      spot_networks: (spotNetworks ?? []),
+    },
+    isAuthor: !!user && user.id === spot.author_id,
+  }
+}
+
+// ---------------------------------------------------------------------------
+// postCommentAction — insert a comment and return it with author username.
+// ---------------------------------------------------------------------------
+export async function postCommentAction(spotId: string, body: string): Promise<CommentActionResult> {
+  const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const trimmed = body.trim()
+  if (!trimmed) return { error: 'Comment cannot be empty.' }
+
+  const { data: comment, error } = await supabase
+    .from('comments')
+    .insert({ spot_id: spotId, author_id: user.id, body: trimmed })
+    .select('id, body, created_at, profiles!author_id(username)')
+    .single()
+
+  if (error || !comment) return { error: error?.message ?? 'Failed to post comment.' }
+
+  return {
+    comment: {
+      id: comment.id,
+      author: (comment.profiles as unknown as { username: string } | null)?.username ?? 'Unknown',
+      body: comment.body,
+      date: formatDate(comment.created_at.split('T')[0]),
+    },
+  }
+}
+
+// ---------------------------------------------------------------------------
+// updateSpotAction — update spot fields via update_spot RPC.
+// ---------------------------------------------------------------------------
+export async function updateSpotAction(
+  spotId: string,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const title = (formData.get('title') as string | null)?.trim()
+  if (!title) return { error: 'Title is required.' }
+
+  const description = (formData.get('description') as string | null)?.trim() || null
+  const date = (formData.get('date') as string | null) || new Date().toISOString().split('T')[0]
+  const networkIds = formData.getAll('networks') as string[]
+  if (networkIds.length === 0) return { error: 'At least one network is required.' }
+
+  const tagNames = extractTags(description)
+
+  const { error: rpcError } = await supabase.rpc('update_spot', {
+    p_spot_id: spotId,
+    p_title: title,
+    p_description: description,
+    p_date: date,
+    p_network_ids: networkIds,
+    p_tag_names: tagNames,
+  })
+
+  return rpcError ? { error: rpcError.message } : {}
+}
+
+// ---------------------------------------------------------------------------
+// deleteSpotAction — delete spot; cascades to all child rows via FK.
+// RLS enforces author check on the DB side.
+// ---------------------------------------------------------------------------
+export async function deleteSpotAction(spotId: string): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const { error } = await supabase.from('spots').delete().eq('id', spotId)
+  return error ? { error: error.message } : {}
+}
+
+// ---------------------------------------------------------------------------
+// removeMediaAction — delete one media item from storage and DB.
+// storagePath: the path stored in media.url (may be full URL or path).
+// ---------------------------------------------------------------------------
+export async function removeMediaAction(
+  mediaId: string,
+  storagePath: string
+): Promise<{ error?: string }> {
+  const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const path = parseStoragePath(storagePath)
+  // Best-effort storage delete (don't fail if file missing)
+  await supabase.storage.from('media').remove([path])
+
+  const { error } = await supabase.from('media').delete().eq('id', mediaId)
+  return error ? { error: error.message } : {}
 }
