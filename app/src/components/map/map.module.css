@@ -169,8 +169,19 @@
   align-items: center;
   background: var(--panel-bg);
   border: 1px solid var(--rule);
+  border-radius: 4px;
   padding: 0 10px;
   gap: 8px;
+  transition: border-color 150ms;
+}
+
+.searchBar:hover,
+.searchBarActive {
+  border-color: var(--sepia);
+}
+
+.searchBarBelowResults {
+  border-radius: 0 0 4px 4px;
 }
 
 .searchInput {
@@ -215,6 +226,7 @@
   background: var(--panel-bg);
   border: 1px solid var(--rule);
   border-bottom: none;
+  border-radius: 4px 4px 0 0;
   max-height: 240px;
   overflow-y: auto;
 }

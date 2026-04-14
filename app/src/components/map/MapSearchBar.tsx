@@ -64,7 +64,7 @@ export default function MapSearchBar({ onSelectSpot }: MapSearchBarProps) {
           ))}
         </ul>
       )}
-      <div className={styles.searchBar}>
+      <div className={[styles.searchBar, query && styles.searchBarActive, results.length > 1 && styles.searchBarBelowResults].filter(Boolean).join(' ')}>
         <input
           type="search"
           placeholder="Search spots or tags…"
