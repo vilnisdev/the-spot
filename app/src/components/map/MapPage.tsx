@@ -150,6 +150,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setFormOpen(false)
     setDroppedLatLng(null)
     setDropMode(false)
+    if (mapRef.current) {
+      mapRef.current.flyTo([spot.lat, spot.lng], 15, { animate: true, duration: 1 })
+    }
   }
 
   function handleCancel() {
