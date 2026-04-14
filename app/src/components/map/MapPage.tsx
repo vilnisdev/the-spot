@@ -64,6 +64,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [formOpen, setFormOpen] = useState(false)
   const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
 
+  // Map instance ref for programmatic flyTo
+  const mapRef = useRef<L.Map | null>(null)
+
   // Spot modal state
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null)
   const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
@@ -158,6 +161,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setFormOpen(false)
     setDroppedLatLng(null)
     setDropMode(false)
+    if (mapRef.current) {
+      mapRef.current.flyTo([spot.lat, spot.lng], 15, { animate: true, duration: 1 })
+    }
   }
 
   function handleCancel() {
@@ -171,21 +177,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   function handleMapReady(map: L.Map) {
     mapRef.current = map
-  }
-
-  function handleSearchSelect(result: SearchSpotResult) {
-    if (mapRef.current) {
-      // Offset center upward so pin sits in the visible area above the bottom-sheet modal.
-      // Modal max-height is 85vh; offset by half that (≈ 42.5% of viewport height).
-      const zoom = 15
-      const modalOffsetPx = window.innerHeight * 0.425
-      const targetPx = mapRef.current.project([result.lat, result.lng], zoom)
-      const adjustedPx = targetPx.add([0, modalOffsetPx])
-      const adjustedCenter = mapRef.current.unproject(adjustedPx, zoom)
-      mapRef.current.flyTo(adjustedCenter, zoom, { animate: true, duration: 1 })
-    }
-    searchedSpotRef.current = { lat: result.lat, lng: result.lng }
-    handleSpotClick({ id: result.id, title: result.title, lat: result.lat, lng: result.lng, spot_networks: [] })
   }
 
   // ── Spot modal interactions ──
