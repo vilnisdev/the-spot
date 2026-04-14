@@ -12,6 +12,7 @@ import {
   deleteSpotAction,
   type CreatedSpot,
 } from '@/app/actions/spots'
+import { createSupabaseBrowserClient } from '@/lib/supabase/browser'
 import styles from './map.module.css'
 import formStyles from './spotCreationForm.module.css'
 
@@ -76,6 +77,53 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     return () => window.removeEventListener('keydown', handleKey)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropMode])
+
+  // ── Realtime: live comment updates ──
+  useEffect(() => {
+    if (!spotDetail) return
+    const supabase = createSupabaseBrowserClient()
+    const spotId = spotDetail.id
+
+    const channel = supabase
+      .channel(`live-comments-${spotId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'comments', filter: `spot_id=eq.${spotId}` },
+        (payload) => {
+          const row = payload.new as { id: string; body: string; created_at: string }
+          setSpotDetail((prev) => {
+            if (!prev) return prev
+            if (prev.comments?.some((c) => c.id === row.id)) return prev
+            // Fetch with author join — payload doesn't include joined columns
+            supabase
+              .from('comments')
+              .select('id, body, created_at, profiles!author_id(username)')
+              .eq('id', row.id)
+              .single()
+              .then(({ data: c }) => {
+                if (!c) return
+                const comment = {
+                  id: c.id,
+                  author: (c.profiles as unknown as { username: string } | null)?.username ?? 'Unknown',
+                  body: c.body,
+                  date: new Date(c.created_at.split('T')[0] + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'long', day: 'numeric', year: 'numeric',
+                  }),
+                }
+                setSpotDetail((p) => {
+                  if (!p) return p
+                  if (p.comments?.some((c) => c.id === comment.id)) return p
+                  return { ...p, comments: [...(p.comments ?? []), comment] }
+                })
+              })
+            return prev
+          })
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [spotDetail?.id])
 
   function enterDropMode() {
     setDropMode(true)
