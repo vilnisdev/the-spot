@@ -78,44 +78,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dropMode])
 
-  // ── Realtime: live pin updates ──
-  useEffect(() => {
-    const supabase = createSupabaseBrowserClient()
-    const userNetworkIds = new Set(networks.map((n) => n.id))
-
-    const channel = supabase
-      .channel('live-spots')
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'spot_networks' },
-        async (payload) => {
-          const { spot_id, network_id } = payload.new as { spot_id: string; network_id: string }
-          if (!userNetworkIds.has(network_id)) return
-          const { data } = await supabase
-            .from('spots')
-            .select('id, title, lat, lng, spot_networks(network_id)')
-            .eq('id', spot_id)
-            .single()
-          if (data) {
-            setLiveSpots((prev) => prev.some((s) => s.id === data.id) ? prev : [...prev, data])
-          }
-        }
-      )
-      .on(
-        'postgres_changes',
-        { event: 'DELETE', schema: 'public', table: 'spots' },
-        (payload) => {
-          const id = (payload.old as { id: string }).id
-          setLiveSpots((prev) => prev.filter((s) => s.id !== id))
-        }
-      )
-      .subscribe()
-
-    return () => { supabase.removeChannel(channel) }
-  // networks is stable (SSR prop); no deps needed beyond initial mount
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [networks])
-
   // ── Realtime: live comment updates ──
   useEffect(() => {
     if (!spotDetail) return
