@@ -72,6 +72,8 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   // Map instance ref for programmatic flyTo
   const mapRef = useRef<L.Map | null>(null)
+  // Tracks spot coords when modal was opened via search, for re-center on close
+  const searchedSpotRef = useRef<{ lat: number; lng: number } | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -172,7 +174,17 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   function handleSearchSelect(result: SearchSpotResult) {
-    mapRef.current?.flyTo([result.lat, result.lng], 15, { animate: true, duration: 1 })
+    if (mapRef.current) {
+      // Offset center upward so pin sits in the visible area above the bottom-sheet modal.
+      // Modal max-height is 85vh; offset by half that (≈ 42.5% of viewport height).
+      const zoom = 15
+      const modalOffsetPx = window.innerHeight * 0.425
+      const targetPx = mapRef.current.project([result.lat, result.lng], zoom)
+      const adjustedPx = targetPx.subtract([0, modalOffsetPx])
+      const adjustedCenter = mapRef.current.unproject(adjustedPx, zoom)
+      mapRef.current.flyTo(adjustedCenter, zoom, { animate: true, duration: 1 })
+    }
+    searchedSpotRef.current = { lat: result.lat, lng: result.lng }
     handleSpotClick({ id: result.id, title: result.title, lat: result.lat, lng: result.lng, spot_networks: [] })
   }
 
@@ -188,6 +200,10 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   function handleModalClose() {
+    if (searchedSpotRef.current) {
+      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
+      searchedSpotRef.current = null
+    }
     setSpotDetail(null)
     setSelectedSpot(null)
   }
@@ -218,6 +234,10 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     const { error } = await deleteSpotAction(spotDetail.id)
     if (error) return
     setLiveSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
+    if (searchedSpotRef.current) {
+      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
+      searchedSpotRef.current = null
+    }
     setSpotDetail(null)
     setSelectedSpot(null)
   }
