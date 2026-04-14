@@ -176,6 +176,7 @@
 }
 
 .searchBar:hover,
+.searchBar:focus-within,
 .searchBarActive {
   border-color: var(--sepia);
 }
