@@ -199,11 +199,14 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     }
   }
 
-  function handleModalClose() {
+  function handleModalStartClose() {
     if (searchedSpotRef.current) {
       mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
       searchedSpotRef.current = null
     }
+  }
+
+  function handleModalClose() {
     setSpotDetail(null)
     setSelectedSpot(null)
   }
@@ -348,6 +351,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       <SpotModal
         spot={spotDetail}
         isAuthor={isAuthor}
+        onStartClose={handleModalStartClose}
         onClose={handleModalClose}
         onEdit={handleEdit}
         onDelete={handleDelete}
