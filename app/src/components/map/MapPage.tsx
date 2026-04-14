@@ -73,8 +73,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
 
-  // Map instance ref for programmatic flyTo
-  const mapRef = useRef<L.Map | null>(null)
   // Tracks spot coords when modal was opened via search, for re-center on close
   const searchedSpotRef = useRef<{ lat: number; lng: number } | null>(null)
 
@@ -236,6 +234,12 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setSelectedSpot(null)
   }
 
+  async function handleSearchSelect(result: SearchSpotResult) {
+    searchedSpotRef.current = { lat: result.lat, lng: result.lng }
+    mapRef.current?.flyTo([result.lat, result.lng], 15, { animate: true, duration: 1 })
+    await handleSpotClick({ ...result, spot_networks: [] })
+  }
+
   async function handlePostComment(body: string) {
     if (!spotDetail) return
     const result = await postCommentAction(spotDetail.id, body)
@@ -290,6 +294,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
             selected={selectedNetworkId}
             onChange={setSelectedNetworkId}
           />
+        </div>
+        <div className={styles.panelSection} style={{ marginTop: 'auto', borderTop: '1px solid var(--rule)' }}>
+          <a href="/profile" className={styles.panelNavLink}>My Profile →</a>
         </div>
       </aside>
 
