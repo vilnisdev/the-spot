@@ -28,6 +28,7 @@ interface MapViewProps {
   provisionalPin: LatLng | null
   onDrop: (latlng: LatLng) => void
   onSpotClick: (spot: Spot) => void
+  onMapReady?: (map: L.Map) => void
 }
 
 const OSM_TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -70,7 +71,7 @@ function centroid(spots: Spot[]): [number, number] {
 }
 
 // Manages cursor and click events inside the Leaflet context
-function DropHandler({ dropMode, onDrop }: { dropMode: boolean; onDrop: (latlng: LatLng) => void }) {
+function DropHandler({ dropMode, onDrop, onMapReady }: { dropMode: boolean; onDrop: (latlng: LatLng) => void; onMapReady?: (map: L.Map) => void }) {
   const map = useMapEvents({
     click(e) {
       if (dropMode) {
@@ -80,6 +81,11 @@ function DropHandler({ dropMode, onDrop }: { dropMode: boolean; onDrop: (latlng:
   })
 
   useEffect(() => {
+    onMapReady?.(map)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     const container = map.getContainer()
     container.style.cursor = dropMode ? 'crosshair' : ''
   }, [dropMode, map])
@@ -87,7 +93,7 @@ function DropHandler({ dropMode, onDrop }: { dropMode: boolean; onDrop: (latlng:
   return null
 }
 
-export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpotClick }: MapViewProps) {
+export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpotClick, onMapReady }: MapViewProps) {
   const [dark, setDark] = useState(false)
 
   useEffect(() => {
@@ -108,7 +114,7 @@ export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpo
         url={dark ? STADIA_DARK_TILE : OSM_TILE}
         attribution={dark ? STADIA_DARK_ATTRIBUTION : OSM_ATTRIBUTION}
       />
-      <DropHandler dropMode={dropMode} onDrop={handleDrop} />
+      <DropHandler dropMode={dropMode} onDrop={handleDrop} onMapReady={onMapReady} />
       {spots.map((spot) => (
         <Marker
           key={spot.id}

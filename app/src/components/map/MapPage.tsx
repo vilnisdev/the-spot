@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import type L from 'leaflet'
 import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
@@ -60,6 +61,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [provisionalPin, setProvisionalPin] = useState<LatLng | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
+
+  // Map instance ref for programmatic flyTo
+  const mapRef = useRef<L.Map | null>(null)
 
   // Spot modal state
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null)
@@ -160,6 +164,10 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setFormOpen(false)
     setDroppedLatLng(null)
     setDropMode(false)
+  }
+
+  function handleMapReady(map: L.Map) {
+    mapRef.current = map
   }
 
   // ── Spot modal interactions ──
@@ -272,6 +280,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           provisionalPin={provisionalPin}
           onDrop={handleDrop}
           onSpotClick={handleSpotClick}
+          onMapReady={handleMapReady}
         />
       </div>
 
