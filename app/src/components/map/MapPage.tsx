@@ -88,24 +88,17 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'spot_networks' },
-        (payload) => {
+        async (payload) => {
           const { spot_id, network_id } = payload.new as { spot_id: string; network_id: string }
           if (!userNetworkIds.has(network_id)) return
-          setLiveSpots((prev) => {
-            if (prev.some((s) => s.id === spot_id)) return prev
-            // Spot is already committed when spot_networks fires (same transaction)
-            supabase
-              .from('spots')
-              .select('id, title, lat, lng, spot_networks(network_id)')
-              .eq('id', spot_id)
-              .single()
-              .then(({ data }) => {
-                if (data) {
-                  setLiveSpots((p) => p.some((s) => s.id === data.id) ? p : [...p, data])
-                }
-              })
-            return prev
-          })
+          const { data } = await supabase
+            .from('spots')
+            .select('id, title, lat, lng, spot_networks(network_id)')
+            .eq('id', spot_id)
+            .single()
+          if (data) {
+            setLiveSpots((prev) => prev.some((s) => s.id === data.id) ? prev : [...prev, data])
+          }
         }
       )
       .on(
