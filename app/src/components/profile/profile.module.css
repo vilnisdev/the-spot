@@ -196,11 +196,8 @@
   align-items: center;
 }
 
-/* Hover device: show expanded controls on card hover */
+/* Hover device: fade in on card hover */
 @media (hover: hover) {
-  .moreBtn {
-    display: none;
-  }
   .editBtn,
   .deleteBtn {
     opacity: 0;
@@ -214,22 +211,6 @@
   }
 }
 
-/* Touch device: always show ⋯; expanded controls toggled via JS */
-@media (hover: none) {
-  .moreBtn {
-    display: flex;
-  }
-  .editBtn,
-  .deleteBtn {
-    display: none;
-  }
-  .editBtn.visible,
-  .deleteBtn.visible {
-    display: flex;
-  }
-}
-
-.moreBtn,
 .editBtn,
 .deleteBtn {
   width: 28px;
@@ -256,11 +237,6 @@
 .deleteBtn:hover {
   color: #b04030;
   border-color: #b04030;
-}
-
-.moreBtn:hover {
-  color: var(--ink);
-  border-color: var(--ink-faint);
 }
 
 /* ── Responsive ── */

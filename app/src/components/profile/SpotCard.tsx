@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import type { MySpot } from '@/app/actions/spots'
 import styles from './profile.module.css'
 
@@ -20,8 +19,6 @@ interface SpotCardProps {
 }
 
 export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardProps) {
-  const [controlsOpen, setControlsOpen] = useState(false)
-
   function handleCardClick(e: React.MouseEvent) {
     // Don't open modal if a control button was clicked
     const target = e.target as HTMLElement
@@ -37,11 +34,6 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
   function handleDelete(e: React.MouseEvent) {
     e.stopPropagation()
     onDelete(spot)
-  }
-
-  function handleMore(e: React.MouseEvent) {
-    e.stopPropagation()
-    setControlsOpen((v) => !v)
   }
 
   const sub = [spot.date ? formatDate(spot.date) : null, spot.state]
@@ -86,19 +78,9 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
 
       {/* Controls */}
       <div className={styles.cardControls}>
-        {/* Touch: ⋯ toggles edit/delete */}
         <button
           type="button"
-          className={styles.moreBtn}
-          onClick={handleMore}
-          aria-label="More options"
-          aria-expanded={controlsOpen}
-        >
-          ···
-        </button>
-        <button
-          type="button"
-          className={`${styles.editBtn}${controlsOpen ? ` ${styles.visible}` : ''}`}
+          className={styles.editBtn}
           onClick={handleEdit}
           aria-label={`Edit ${spot.title}`}
           title="Edit"
@@ -107,7 +89,7 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
         </button>
         <button
           type="button"
-          className={`${styles.deleteBtn}${controlsOpen ? ` ${styles.visible}` : ''}`}
+          className={styles.deleteBtn}
           onClick={handleDelete}
           aria-label={`Delete ${spot.title}`}
           title="Delete"
