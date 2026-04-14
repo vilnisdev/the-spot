@@ -71,7 +71,15 @@ function centroid(spots: Spot[]): [number, number] {
 }
 
 // Manages cursor and click events inside the Leaflet context
-function DropHandler({ dropMode, onDrop, onMapReady }: { dropMode: boolean; onDrop: (latlng: LatLng) => void; onMapReady?: (map: L.Map) => void }) {
+function DropHandler({
+  dropMode,
+  onDrop,
+  onMapReady,
+}: {
+  dropMode: boolean
+  onDrop: (latlng: LatLng) => void
+  onMapReady?: (map: L.Map) => void
+}) {
   const map = useMapEvents({
     click(e) {
       if (dropMode) {
@@ -82,8 +90,8 @@ function DropHandler({ dropMode, onDrop, onMapReady }: { dropMode: boolean; onDr
 
   useEffect(() => {
     onMapReady?.(map)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // runs once; map instance is stable
 
   useEffect(() => {
     const container = map.getContainer()

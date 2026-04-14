@@ -323,3 +323,24 @@ export async function removeMediaAction(
   const { error } = await supabase.from('media').delete().eq('id', mediaId)
   return error ? { error: error.message } : {}
 }
+
+// ---------------------------------------------------------------------------
+// searchSpotsAction — search spots by title or tag name, RLS-enforced.
+// Empty query returns [] without a DB round-trip.
+// ---------------------------------------------------------------------------
+export type SearchSpotResult = { id: string; title: string; lat: number; lng: number }
+
+export type SearchSpotsActionResult =
+  | { results: SearchSpotResult[] }
+  | { error: string }
+
+export async function searchSpotsAction(query: string): Promise<SearchSpotsActionResult> {
+  const trimmed = query.trim()
+  if (!trimmed) return { results: [] }
+
+  const supabase = await createSupabaseServerClient()
+  const { data, error } = await supabase.rpc('search_spots', { p_query: trimmed })
+
+  if (error) return { error: error.message }
+  return { results: (data ?? []) as SearchSpotResult[] }
+}
