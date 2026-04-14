@@ -1,16 +1,19 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
+import type L from 'leaflet'
 import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
 import SpotModal, { type SpotForModal } from './SpotModal'
 import SpotEditForm from './SpotEditForm'
+import MapSearchBar from './MapSearchBar'
 import {
   getSpotDetailAction,
   postCommentAction,
   deleteSpotAction,
   type CreatedSpot,
+  type SearchSpotResult,
 } from '@/app/actions/spots'
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser'
 import styles from './map.module.css'
@@ -66,6 +69,11 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
+
+  // Map instance ref for programmatic flyTo
+  const mapRef = useRef<L.Map | null>(null)
+  // Tracks spot coords when modal was opened via search, for re-center on close
+  const searchedSpotRef = useRef<{ lat: number; lng: number } | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -159,6 +167,27 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setDropMode(false)
   }
 
+  // ── Map ref callbacks ──
+
+  function handleMapReady(map: L.Map) {
+    mapRef.current = map
+  }
+
+  function handleSearchSelect(result: SearchSpotResult) {
+    if (mapRef.current) {
+      // Offset center upward so pin sits in the visible area above the bottom-sheet modal.
+      // Modal max-height is 85vh; offset by half that (≈ 42.5% of viewport height).
+      const zoom = 15
+      const modalOffsetPx = window.innerHeight * 0.425
+      const targetPx = mapRef.current.project([result.lat, result.lng], zoom)
+      const adjustedPx = targetPx.add([0, modalOffsetPx])
+      const adjustedCenter = mapRef.current.unproject(adjustedPx, zoom)
+      mapRef.current.flyTo(adjustedCenter, zoom, { animate: true, duration: 1 })
+    }
+    searchedSpotRef.current = { lat: result.lat, lng: result.lng }
+    handleSpotClick({ id: result.id, title: result.title, lat: result.lat, lng: result.lng, spot_networks: [] })
+  }
+
   // ── Spot modal interactions ──
 
   async function handleSpotClick(spot: Spot) {
@@ -167,6 +196,13 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     if (!('error' in result)) {
       setSpotDetail(result.spot)
       setIsAuthor(result.isAuthor)
+    }
+  }
+
+  function handleModalStartClose() {
+    if (searchedSpotRef.current) {
+      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
+      searchedSpotRef.current = null
     }
   }
 
@@ -201,6 +237,10 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     const { error } = await deleteSpotAction(spotDetail.id)
     if (error) return
     setLiveSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
+    if (searchedSpotRef.current) {
+      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
+      searchedSpotRef.current = null
+    }
     setSpotDetail(null)
     setSelectedSpot(null)
   }
@@ -269,7 +309,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           provisionalPin={provisionalPin}
           onDrop={handleDrop}
           onSpotClick={handleSpotClick}
+          onMapReady={handleMapReady}
         />
+        <MapSearchBar onSelectSpot={handleSearchSelect} />
       </div>
 
       {/* Drop mode banner */}
@@ -309,6 +351,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       <SpotModal
         spot={spotDetail}
         isAuthor={isAuthor}
+        onStartClose={handleModalStartClose}
         onClose={handleModalClose}
         onEdit={handleEdit}
         onDelete={handleDelete}

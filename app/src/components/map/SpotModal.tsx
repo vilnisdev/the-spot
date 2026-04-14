@@ -36,6 +36,7 @@ interface SpotModalProps {
   spot: SpotForModal | null
   isAuthor: boolean
   onClose: () => void
+  onStartClose?: () => void
   onEdit: () => void
   onDelete: () => void
   onPostComment: (body: string) => Promise<void>
@@ -47,7 +48,7 @@ function formatCoords(lat: number, lng: number) {
   return `${latStr}, ${lngStr}`
 }
 
-export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete, onPostComment }: SpotModalProps) {
+export default function SpotModal({ spot, isAuthor, onClose, onStartClose, onEdit, onDelete, onPostComment }: SpotModalProps) {
   const [exiting, setExiting] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [commentText, setCommentText] = useState('')
@@ -64,6 +65,7 @@ export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete, o
   }, [spot?.id])
 
   function handleClose() {
+    onStartClose?.()
     setExiting(true)
     setTimeout(onClose, 750)
   }
