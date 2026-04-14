@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import styles from './spotModal.module.css'
 
 export interface SpotMedia {
+  id?: string
   type: 'image' | 'audio'
   url: string
   name?: string
@@ -37,6 +38,7 @@ interface SpotModalProps {
   onClose: () => void
   onEdit: () => void
   onDelete: () => void
+  onPostComment: (body: string) => Promise<void>
 }
 
 function formatCoords(lat: number, lng: number) {
@@ -45,10 +47,11 @@ function formatCoords(lat: number, lng: number) {
   return `${latStr}, ${lngStr}`
 }
 
-export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete }: SpotModalProps) {
+export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete, onPostComment }: SpotModalProps) {
   const [exiting, setExiting] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [commentText, setCommentText] = useState('')
+  const [posting, setPosting] = useState(false)
   const commentRef = useRef<HTMLTextAreaElement>(null)
 
   // Reset state when a new spot opens
@@ -140,6 +143,7 @@ export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete }:
                       onClick={() => setLightboxIndex(i)}
                       aria-label={`View photo ${i + 1}`}
                     >
+                      <div className={styles.thumbPlaceholder} aria-hidden="true" />
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={img.url}
@@ -149,7 +153,6 @@ export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete }:
                           (e.target as HTMLImageElement).style.display = 'none'
                         }}
                       />
-                      <div className={styles.thumbPlaceholder} aria-hidden="true" />
                     </button>
                   ))}
                 </div>
@@ -243,9 +246,17 @@ export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete }:
               <button
                 type="button"
                 className={styles.btnPost}
-                disabled={!commentText.trim()}
+                disabled={!commentText.trim() || posting}
+                onClick={async () => {
+                  if (!commentText.trim()) return
+                  setPosting(true)
+                  await onPostComment(commentText)
+                  setCommentText('')
+                  if (commentRef.current) commentRef.current.style.height = 'auto'
+                  setPosting(false)
+                }}
               >
-                Post
+                {posting ? 'Posting…' : 'Post'}
               </button>
             </div>
           </div>

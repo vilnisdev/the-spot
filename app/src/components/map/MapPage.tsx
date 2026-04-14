@@ -5,7 +5,13 @@ import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
 import SpotModal, { type SpotForModal } from './SpotModal'
-import type { CreatedSpot } from '@/app/actions/spots'
+import SpotEditForm from './SpotEditForm'
+import {
+  getSpotDetailAction,
+  postCommentAction,
+  deleteSpotAction,
+  type CreatedSpot,
+} from '@/app/actions/spots'
 import styles from './map.module.css'
 import formStyles from './spotCreationForm.module.css'
 
@@ -41,29 +47,10 @@ interface LatLng {
 interface MapPageProps {
   spots: Spot[]
   networks: Network[]
+  userId: string | null
 }
 
-// ---------------------------------------------------------------------------
-// Prototype mock data — replaced by real DB fetch in issue #10
-// ---------------------------------------------------------------------------
-const MOCK_SPOT_DETAIL: Partial<SpotForModal> = {
-  description: "Found a dense patch of chanterelles just off the main trail. Soil was damp from last week's rain. Birdsong was constant — mostly thrush. Worth returning in late September. #mushrooms #chanterelles #foraging",
-  state: "Oregon",
-  date: "April 12, 2026",
-  author: "vilnis",
-  tags: ["mushrooms", "chanterelles", "foraging"],
-  media: [
-    { type: 'image', url: '/mock/chanterelle-1.jpg' },
-    { type: 'image', url: '/mock/chanterelle-2.jpg' },
-    { type: 'audio', url: '/mock/birdsong.mp3', name: 'birdsong.mp3' },
-  ],
-  comments: [
-    { id: '1', author: 'ada', body: "I was there last week too — whole area smells incredible right now.", date: "April 11, 2026" },
-    { id: '2', author: 'reed', body: "Any morels nearby? Hoping the weather holds.", date: "April 12, 2026" },
-  ],
-}
-
-export default function MapPage({ spots: initialSpots, networks }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks, userId: _userId }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelFullyClosed, setPanelFullyClosed] = useState(true)
@@ -72,7 +59,12 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
   const [provisionalPin, setProvisionalPin] = useState<LatLng | null>(null)
   const [formOpen, setFormOpen] = useState(false)
   const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
+
+  // Spot modal state
   const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null)
+  const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
+  const [isAuthor, setIsAuthor] = useState(false)
+  const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -88,7 +80,6 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
   function enterDropMode() {
     setDropMode(true)
     if (panelOpen) setPanelOpen(false)
-    // panelFullyClosed will be set true via onTransitionEnd
   }
 
   function exitDropMode() {
@@ -120,16 +111,69 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
     setDropMode(false)
   }
 
+  // ── Spot modal interactions ──
+
+  async function handleSpotClick(spot: Spot) {
+    setSelectedSpot(spot)
+    const result = await getSpotDetailAction(spot.id)
+    if (!('error' in result)) {
+      setSpotDetail(result.spot)
+      setIsAuthor(result.isAuthor)
+    }
+  }
+
+  function handleModalClose() {
+    setSpotDetail(null)
+    setSelectedSpot(null)
+  }
+
+  function handleEdit() {
+    setEditingSpot(spotDetail)
+    setSpotDetail(null)
+  }
+
+  async function handleEditSave() {
+    if (!editingSpot) return
+    const result = await getSpotDetailAction(editingSpot.id)
+    setEditingSpot(null)
+    if (!('error' in result)) {
+      setSpotDetail(result.spot)
+      setIsAuthor(result.isAuthor)
+    }
+  }
+
+  function handleEditCancel() {
+    const snapshot = editingSpot ?? null
+    setEditingSpot(null)
+    setSpotDetail(snapshot)
+  }
+
+  async function handleDelete() {
+    if (!spotDetail) return
+    const { error } = await deleteSpotAction(spotDetail.id)
+    if (error) return
+    setLiveSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
+    setSpotDetail(null)
+    setSelectedSpot(null)
+  }
+
+  async function handlePostComment(body: string) {
+    if (!spotDetail) return
+    const result = await postCommentAction(spotDetail.id, body)
+    if (!('error' in result)) {
+      const newComment = result.comment
+      setSpotDetail((prev) =>
+        prev ? { ...prev, comments: [...(prev.comments ?? []), newComment] } : prev
+      )
+    }
+  }
+
   const visibleSpots =
     selectedNetworkId === null
       ? liveSpots
       : liveSpots.filter((s) =>
           s.spot_networks.some((sn) => sn.network_id === selectedNetworkId)
         )
-
-  const modalSpot: SpotForModal | null = selectedSpot
-    ? { ...selectedSpot, ...MOCK_SPOT_DETAIL }
-    : null
 
   return (
     <div className={styles.layout}>
@@ -152,7 +196,6 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
       >
         <div className={styles.panelHeader}>
           <span className={styles.panelTitle}>The Spot</span>
-          {/* Inline button inside panel header — visible when panel is open */}
           <button
             className={styles.menuBtn}
             onClick={() => setPanelOpen(false)}
@@ -177,11 +220,11 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
           dropMode={dropMode}
           provisionalPin={provisionalPin}
           onDrop={handleDrop}
-          onSpotClick={setSelectedSpot}
+          onSpotClick={handleSpotClick}
         />
       </div>
 
-      {/* Drop mode banner — at layout level, outside mapWrap stacking context */}
+      {/* Drop mode banner */}
       {dropMode && (
         <div className={formStyles.dropBanner} role="status">
           <span>Click the map to place your spot — Esc to cancel</span>
@@ -196,7 +239,7 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
         </div>
       )}
 
-      {/* Add Spot button — at layout level, outside mapWrap stacking context */}
+      {/* Add Spot button */}
       <button
         type="button"
         className={`${formStyles.addSpotBtn} ${dropMode ? formStyles.addSpotBtnActive : ''}`}
@@ -216,12 +259,22 @@ export default function MapPage({ spots: initialSpots, networks }: MapPageProps)
       />
 
       <SpotModal
-        spot={modalSpot}
-        isAuthor={true}
-        onClose={() => setSelectedSpot(null)}
-        onEdit={() => { /* stub — wired in issue #10 */ }}
-        onDelete={() => { /* stub — wired in issue #10 */ }}
+        spot={spotDetail}
+        isAuthor={isAuthor}
+        onClose={handleModalClose}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
+        onPostComment={handlePostComment}
       />
+
+      {editingSpot && (
+        <SpotEditForm
+          spot={editingSpot}
+          networks={networks}
+          onSave={handleEditSave}
+          onCancel={handleEditCancel}
+        />
+      )}
     </div>
   )
 }

@@ -138,10 +138,8 @@ export default function SpotCreationForm({
       const path = `${spotId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
       const { error: storErr } = await supabase.storage.from('media').upload(path, file)
       if (storErr) continue // best-effort; don't fail the save
-
-      const { data: urlData } = supabase.storage.from('media').getPublicUrl(path)
       const type = ALLOWED_IMAGE_TYPES.includes(file.type) ? 'image' : 'audio'
-      await supabase.from('media').insert({ spot_id: spotId, url: urlData.publicUrl, type })
+      await supabase.from('media').insert({ spot_id: spotId, url: path, type, name: file.name })
     }
   }
 
