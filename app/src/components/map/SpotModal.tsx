@@ -143,6 +143,7 @@ export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete, o
                       onClick={() => setLightboxIndex(i)}
                       aria-label={`View photo ${i + 1}`}
                     >
+                      <div className={styles.thumbPlaceholder} aria-hidden="true" />
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={img.url}
@@ -152,7 +153,6 @@ export default function SpotModal({ spot, isAuthor, onClose, onEdit, onDelete, o
                           (e.target as HTMLImageElement).style.display = 'none'
                         }}
                       />
-                      <div className={styles.thumbPlaceholder} aria-hidden="true" />
                     </button>
                   ))}
                 </div>
