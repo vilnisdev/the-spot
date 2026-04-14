@@ -8,6 +8,7 @@ import SpotCreationForm from './SpotCreationForm'
 import SpotModal, { type SpotForModal } from './SpotModal'
 import SpotEditForm from './SpotEditForm'
 import MapSearchBar from './MapSearchBar'
+import { flyToAbovePin } from './mapHelpers'
 import {
   getSpotDetailAction,
   postCommentAction,
@@ -74,8 +75,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
 
-  // Tracks spot coords when modal was opened via search, for re-center on close
-  const searchedSpotRef = useRef<{ lat: number; lng: number } | null>(null)
+  // Tracks pin coords whenever a modal is opened via offset flyTo (search,
+  // visit, or pin click) — used to pan back to true center on modal close.
+  const pinFocusRef = useRef<{ lat: number; lng: number } | null>(null)
   // Pending flyTo when map isn't ready yet (e.g. arriving via /?spot=<id>)
   const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null)
 
@@ -147,10 +149,10 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       const { lat, lng } = result.spot
       setSpotDetail(result.spot)
       setIsAuthor(result.isAuthor)
-      searchedSpotRef.current = { lat, lng }
+      pinFocusRef.current = { lat, lng }
       pendingFlyToRef.current = { lat, lng }
       if (mapRef.current) {
-        mapRef.current.flyTo([lat, lng], 15, { animate: true, duration: 1 })
+        flyToAbovePin(mapRef.current, lat, lng)
         pendingFlyToRef.current = null
       }
     })
@@ -199,7 +201,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   function handleMapReady(map: L.Map) {
     mapRef.current = map
     if (pendingFlyToRef.current) {
-      map.flyTo([pendingFlyToRef.current.lat, pendingFlyToRef.current.lng], 15, { animate: true, duration: 1 })
+      flyToAbovePin(map, pendingFlyToRef.current.lat, pendingFlyToRef.current.lng)
       pendingFlyToRef.current = null
     }
   }
@@ -208,6 +210,8 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   async function handleSpotClick(spot: Spot) {
     setSelectedSpot(spot)
+    pinFocusRef.current = { lat: spot.lat, lng: spot.lng }
+    if (mapRef.current) flyToAbovePin(mapRef.current, spot.lat, spot.lng)
     const result = await getSpotDetailAction(spot.id)
     if (!('error' in result)) {
       setSpotDetail(result.spot)
@@ -216,9 +220,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   function handleModalStartClose() {
-    if (searchedSpotRef.current) {
-      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
-      searchedSpotRef.current = null
+    if (pinFocusRef.current) {
+      mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
+      pinFocusRef.current = null
     }
   }
 
@@ -253,17 +257,15 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     const { error } = await deleteSpotAction(spotDetail.id)
     if (error) return
     setLiveSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
-    if (searchedSpotRef.current) {
-      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
-      searchedSpotRef.current = null
+    if (pinFocusRef.current) {
+      mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
+      pinFocusRef.current = null
     }
     setSpotDetail(null)
     setSelectedSpot(null)
   }
 
   async function handleSearchSelect(result: SearchSpotResult) {
-    searchedSpotRef.current = { lat: result.lat, lng: result.lng }
-    mapRef.current?.flyTo([result.lat, result.lng], 15, { animate: true, duration: 1 })
     await handleSpotClick({ ...result, spot_networks: [] })
   }
 
