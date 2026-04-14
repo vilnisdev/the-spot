@@ -26,8 +26,13 @@ export default function MapSearchBar({ onSelectSpot }: MapSearchBarProps) {
       const res = await searchSpotsAction(query)
       setLoading(false)
       if ('results' in res) {
-        setResults(res.results)
-        if (res.results.length === 1) onSelectSpot(res.results[0])
+        if (res.results.length === 1) {
+          onSelectSpot(res.results[0])
+          setQuery('')
+          setResults([])
+        } else {
+          setResults(res.results)
+        }
       }
     }, 350)
 
