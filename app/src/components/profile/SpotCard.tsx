@@ -36,6 +36,11 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
     onDelete(spot)
   }
 
+  function handleVisit(e: React.MouseEvent) {
+    e.stopPropagation()
+    window.location.href = `/?spot=${spot.id}`
+  }
+
   const sub = [spot.date ? formatDate(spot.date) : null, spot.state]
     .filter(Boolean)
     .join(' · ')
@@ -78,6 +83,17 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
 
       {/* Controls */}
       <div className={styles.cardControls}>
+        <button
+          type="button"
+          className={styles.visitBtn}
+          onClick={handleVisit}
+          aria-label={`View ${spot.title} on map`}
+          title="View on map"
+        >
+          <svg viewBox="0 0 24 32" width="12" height="16" fill="currentColor" aria-hidden="true">
+            <path d="M12 0C6.477 0 2 4.477 2 10c0 7 10 22 10 22S22 17 22 10C22 4.477 17.523 0 12 0z"/>
+          </svg>
+        </button>
         <button
           type="button"
           className={styles.editBtn}

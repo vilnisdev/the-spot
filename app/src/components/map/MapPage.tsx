@@ -52,9 +52,10 @@ interface MapPageProps {
   spots: Spot[]
   networks: Network[]
   userId: string | null
+  initialSpotId: string | null
 }
 
-export default function MapPage({ spots: initialSpots, networks, userId: _userId }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelFullyClosed, setPanelFullyClosed] = useState(true)
@@ -75,6 +76,8 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   // Tracks spot coords when modal was opened via search, for re-center on close
   const searchedSpotRef = useRef<{ lat: number; lng: number } | null>(null)
+  // Pending flyTo when map isn't ready yet (e.g. arriving via /?spot=<id>)
+  const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -134,6 +137,24 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     return () => { supabase.removeChannel(channel) }
   }, [spotDetail?.id])
 
+  // ── Handle /?spot=<id> deep link ──
+  useEffect(() => {
+    if (!initialSpotId) return
+    setSelectedNetworkId(null)
+    window.history.replaceState(null, '', '/')
+    getSpotDetailAction(initialSpotId).then((result) => {
+      if ('error' in result) return
+      setSpotDetail(result.spot)
+      setIsAuthor(result.isAuthor)
+      pendingFlyToRef.current = { lat: result.spot.lat, lng: result.spot.lng }
+      if (mapRef.current) {
+        mapRef.current.flyTo([result.spot.lat, result.spot.lng], 15, { animate: true, duration: 1 })
+        pendingFlyToRef.current = null
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSpotId])
+
   function enterDropMode() {
     setDropMode(true)
     if (panelOpen) setPanelOpen(false)
@@ -175,6 +196,10 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   function handleMapReady(map: L.Map) {
     mapRef.current = map
+    if (pendingFlyToRef.current) {
+      map.flyTo([pendingFlyToRef.current.lat, pendingFlyToRef.current.lng], 15, { animate: true, duration: 1 })
+      pendingFlyToRef.current = null
+    }
   }
 
   // ── Spot modal interactions ──
