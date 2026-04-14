@@ -144,11 +144,13 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     window.history.replaceState(null, '', '/')
     getSpotDetailAction(initialSpotId).then((result) => {
       if ('error' in result) return
+      const { lat, lng } = result.spot
       setSpotDetail(result.spot)
       setIsAuthor(result.isAuthor)
-      pendingFlyToRef.current = { lat: result.spot.lat, lng: result.spot.lng }
+      searchedSpotRef.current = { lat, lng }
+      pendingFlyToRef.current = { lat, lng }
       if (mapRef.current) {
-        mapRef.current.flyTo([result.spot.lat, result.spot.lng], 15, { animate: true, duration: 1 })
+        mapRef.current.flyTo([lat, lng], 15, { animate: true, duration: 1 })
         pendingFlyToRef.current = null
       }
     })
