@@ -8,6 +8,8 @@ import SpotCreationForm from './SpotCreationForm'
 import SpotModal, { type SpotForModal } from './SpotModal'
 import SpotEditForm from './SpotEditForm'
 import MapSearchBar from './MapSearchBar'
+import ExploreExitChip from './ExploreExitChip'
+import { useExploreMode } from './useExploreMode'
 import { flyToAbovePin } from './mapHelpers'
 import {
   getSpotDetailAction,
@@ -75,6 +77,19 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
+
+  // Explore mode — hides chrome for distraction-free map viewing
+  const isModalOpen = useCallback(
+    () => spotDetail !== null || editingSpot !== null || formOpen,
+    [spotDetail, editingSpot, formOpen]
+  )
+  const { exploreMode, enterExplore, exitExplore } = useExploreMode({ isModalOpen })
+
+  function handleEnterExplore() {
+    setPanelOpen(false)
+    setPanelFullyClosed(true)
+    enterExplore()
+  }
 
   // Tracks pin coords whenever a modal is opened via offset flyTo (search,
   // visit, or pin click) — used to pan back to true center on modal close.
@@ -293,7 +308,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   return (
     <div className={styles.layout}>
       {/* Fixed button on map — shown only after panel fully slides out */}
-      {panelFullyClosed && (
+      {panelFullyClosed && !exploreMode && (
         <button
           className={styles.menuBtn}
           onClick={() => { setPanelOpen(true); setPanelFullyClosed(false) }}
@@ -302,6 +317,8 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           ☰
         </button>
       )}
+
+      {exploreMode && <ExploreExitChip onExit={exitExplore} />}
 
       <aside
         className={`${styles.panel} ${panelOpen ? styles.panelOpen : ''}`}
@@ -328,6 +345,14 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           />
         </div>
         <div className={styles.panelSection} style={{ marginTop: 'auto', borderTop: '1px solid var(--rule)' }}>
+          <button
+            type="button"
+            className={styles.panelNavLink}
+            style={{ background: 'none', border: 'none', padding: '4px 0', cursor: 'pointer', textAlign: 'left' }}
+            onClick={handleEnterExplore}
+          >
+            Explore
+          </button>
           <a href="/profile" className={styles.panelNavLink}>Profile</a>
           <a href="/settings" className={styles.panelNavLink}>Settings</a>
         </div>
@@ -342,7 +367,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           onSpotClick={handleSpotClick}
           onMapReady={handleMapReady}
         />
-        <MapSearchBar onSelectSpot={handleSearchSelect} />
+        {!exploreMode && <MapSearchBar onSelectSpot={handleSearchSelect} />}
       </div>
 
       {/* Drop mode banner */}
@@ -361,15 +386,17 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       )}
 
       {/* Add Spot button */}
-      <button
-        type="button"
-        className={`${formStyles.addSpotBtn} ${dropMode ? formStyles.addSpotBtnActive : ''}`}
-        onClick={dropMode ? exitDropMode : enterDropMode}
-        aria-label={dropMode ? 'Cancel adding spot' : 'Add a new spot'}
-        aria-pressed={dropMode}
-      >
-        + Add Spot
-      </button>
+      {!exploreMode && (
+        <button
+          type="button"
+          className={`${formStyles.addSpotBtn} ${dropMode ? formStyles.addSpotBtnActive : ''}`}
+          onClick={dropMode ? exitDropMode : enterDropMode}
+          aria-label={dropMode ? 'Cancel adding spot' : 'Add a new spot'}
+          aria-pressed={dropMode}
+        >
+          + Add Spot
+        </button>
+      )}
 
       <SpotCreationForm
         open={formOpen}
