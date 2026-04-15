@@ -12,7 +12,7 @@ export default async function SettingsPageRoute() {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username, theme_preference')
+    .select('username, theme_preference, ui_size')
     .eq('id', user.id)
     .single()
 
@@ -20,6 +20,7 @@ export default async function SettingsPageRoute() {
     <SettingsPage
       username={profile?.username ?? ''}
       themePreference={profile?.theme_preference ?? 'system'}
+      uiSizePreference={profile?.ui_size ?? 'regular'}
     />
   )
 }

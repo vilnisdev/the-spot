@@ -3,6 +3,7 @@
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import { isThemePreference, THEME_COOKIE, type ThemePreference } from '@/lib/theme'
+import { isUiSizePreference, UI_SIZE_COOKIE, type UiSizePreference } from '@/lib/uiSize'
 
 /**
  * updateUsernameAction — update the current user's username.
@@ -58,6 +59,39 @@ export async function updateThemePreferenceAction(
 
   const cookieStore = await cookies()
   cookieStore.set(THEME_COOKIE, preference, {
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+    sameSite: 'lax',
+  })
+
+  return {}
+}
+
+/**
+ * updateUiSizeAction — update the current user's ui_size preference.
+ * Mirrors the DB value into a cookie so the root layout can SSR the correct
+ * `data-size` attribute on subsequent page loads without a flash.
+ */
+export async function updateUiSizeAction(
+  preference: UiSizePreference
+): Promise<{ error?: string }> {
+  if (!isUiSizePreference(preference)) return { error: 'Invalid size.' }
+
+  const supabase = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ ui_size: preference })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+
+  const cookieStore = await cookies()
+  cookieStore.set(UI_SIZE_COOKIE, preference, {
     path: '/',
     maxAge: 60 * 60 * 24 * 365,
     sameSite: 'lax',

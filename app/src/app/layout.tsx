@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { cookies } from 'next/headers'
 import { isThemePreference, THEME_COOKIE, type ThemePreference } from '@/lib/theme'
+import { isUiSizePreference, UI_SIZE_COOKIE, type UiSizePreference } from '@/lib/uiSize'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -16,9 +17,11 @@ export default async function RootLayout({
   const cookieStore = await cookies()
   const stored = cookieStore.get(THEME_COOKIE)?.value
   const theme: ThemePreference = isThemePreference(stored) ? stored : 'system'
+  const storedSize = cookieStore.get(UI_SIZE_COOKIE)?.value
+  const uiSize: UiSizePreference = isUiSizePreference(storedSize) ? storedSize : 'regular'
 
   return (
-    <html lang="en" data-theme={theme} suppressHydrationWarning>
+    <html lang="en" data-theme={theme} data-size={uiSize} suppressHydrationWarning>
       <body>{children}</body>
     </html>
   )

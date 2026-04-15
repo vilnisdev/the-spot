@@ -77,6 +77,14 @@ html {
   height: 100%;
 }
 
+html[data-size="large"] {
+  font-size: 18.4px; /* 115% of 16px — scales all rem-based text */
+}
+
+html[data-size="xlarge"] {
+  font-size: 20.8px; /* 130% of 16px — scales all rem-based text */
+}
+
 html,
 body {
   max-width: 100vw;
