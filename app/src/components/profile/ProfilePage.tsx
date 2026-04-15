@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import PageNav from '@/components/shared/PageNav'
 import SpotModal, { type SpotForModal } from '@/components/map/SpotModal'
 import SpotEditForm from '@/components/map/SpotEditForm'
 import {
@@ -108,12 +109,7 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
 
   return (
     <div className={styles.page}>
-      {/* Nav */}
-      <nav className={styles.topNav}>
-        <Link href="/" className={styles.backLink}>← Map</Link>
-        <span className={styles.navDivider}>·</span>
-        <span className={styles.navTitle}>Profile</span>
-      </nav>
+      <PageNav />
 
       {/* Profile header */}
       <header className={styles.profileHeader}>
@@ -127,22 +123,7 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
               : `${spots.length} spots`}
           </p>
         </div>
-        <Link href="/settings" className={styles.settingsIcon} aria-label="Settings">⚙</Link>
       </header>
-
-      {/* My Networks */}
-      <section className={styles.section}>
-        <p className={styles.sectionLabel}>My Networks</p>
-        {networks.length === 0 ? (
-          <p className={styles.emptyState}>No networks yet.</p>
-        ) : (
-          <ul className={styles.networksList}>
-            {networks.map((n) => (
-              <li key={n.id} className={styles.networkItem}>{n.name}</li>
-            ))}
-          </ul>
-        )}
-      </section>
 
       {/* My Spots list */}
       <section className={styles.section}>
@@ -159,6 +140,20 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
                 onEdit={handleEdit}
                 onDelete={handleDelete}
               />
+            ))}
+          </ul>
+        )}
+      </section>
+
+      {/* My Networks */}
+      <section className={styles.section}>
+        <p className={styles.sectionLabel}>My Networks</p>
+        {networks.length === 0 ? (
+          <p className={styles.emptyState}>No networks yet.</p>
+        ) : (
+          <ul className={styles.networksList}>
+            {networks.map((n) => (
+              <li key={n.id} className={styles.networkItem}>{n.name}</li>
             ))}
           </ul>
         )}

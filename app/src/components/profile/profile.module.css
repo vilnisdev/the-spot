@@ -46,23 +46,6 @@
   padding: 32px 24px 24px;
   border-bottom: 1px solid var(--rule);
   background: var(--modal-bg);
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.settingsIcon {
-  font-size: 1.1rem;
-  color: var(--ink-faint);
-  text-decoration: none;
-  flex-shrink: 0;
-  margin-top: 4px;
-  transition: color 160ms;
-}
-
-.settingsIcon:hover {
-  color: var(--accent);
 }
 
 .username {

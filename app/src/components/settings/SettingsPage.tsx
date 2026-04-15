@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import Link from 'next/link'
+import PageNav from '@/components/shared/PageNav'
 import { updateUsernameAction } from '@/app/actions/profile'
 import styles from './settings.module.css'
 
@@ -29,11 +29,7 @@ export default function SettingsPage({ username: initialUsername }: SettingsPage
 
   return (
     <div className={styles.page}>
-      <nav className={styles.topNav}>
-        <Link href="/profile" className={styles.backLink}>← Profile</Link>
-        <span className={styles.navDivider}>·</span>
-        <span className={styles.navTitle}>Settings</span>
-      </nav>
+      <PageNav />
 
       <div className={styles.content}>
         <form onSubmit={handleSave}>
