@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet'
+import { MapContainer, TileLayer, Marker, Tooltip, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 
@@ -15,6 +15,7 @@ interface Spot {
   lat: number
   lng: number
   spot_networks: SpotNetwork[]
+  thumb_url: string | null
 }
 
 interface LatLng {
@@ -42,7 +43,7 @@ function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
   const fill =
     variant === 'active' ? 'var(--accent)' :
     variant === 'provisional' ? 'none' :
-    'var(--sepia)'
+    'currentColor'
   const stroke = variant === 'provisional' ? 'var(--tan)' : 'none'
   const strokeDasharray = variant === 'provisional' ? '4 3' : 'none'
   const dotFill = variant === 'provisional' ? 'none' : 'white'
@@ -56,7 +57,7 @@ function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
 
   return L.divIcon({
     html: svg,
-    className: '',
+    className: variant === 'saved' ? 'the-spot-pin' : '',
     iconSize: [24, 32],
     iconAnchor: [12, 32],
     popupAnchor: [0, -34],
@@ -129,7 +130,14 @@ export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpo
           position={[spot.lat, spot.lng]}
           icon={makePinIcon('saved')}
           eventHandlers={{ click: () => onSpotClick(spot) }}
-        />
+        >
+          <Tooltip direction="top" offset={[0, -34]} opacity={1} className="the-spot-tooltip">
+            {spot.thumb_url
+              ? <img src={spot.thumb_url} alt={spot.title} className="the-spot-tooltip-img" />
+              : <span className="the-spot-tooltip-title">{spot.title}</span>
+            }
+          </Tooltip>
+        </Marker>
       ))}
       {provisionalPin && (
         <Marker

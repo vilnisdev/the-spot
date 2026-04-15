@@ -37,6 +37,7 @@ interface Spot {
   lat: number
   lng: number
   spot_networks: SpotNetwork[]
+  thumb_url: string | null
 }
 
 interface Network {
@@ -179,7 +180,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }, [])
 
   function handleSave(spot: CreatedSpot) {
-    setLiveSpots((prev) => [...prev, spot])
+    setLiveSpots((prev) => [...prev, { ...spot, thumb_url: null }])
     setProvisionalPin(null)
     setFormOpen(false)
     setDroppedLatLng(null)
@@ -266,7 +267,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   async function handleSearchSelect(result: SearchSpotResult) {
-    await handleSpotClick({ ...result, spot_networks: [] })
+    await handleSpotClick({ ...result, spot_networks: [], thumb_url: null })
   }
 
   async function handlePostComment(body: string) {
