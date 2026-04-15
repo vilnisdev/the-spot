@@ -173,6 +173,51 @@
   transform: translateX(0);
 }
 
+/* ── Explore mode exit chip ── */
+.exploreExitChip {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--panel-bg);
+  border: 1px solid var(--rule);
+  cursor: pointer;
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  transition: border-color 150ms, color 150ms;
+  animation: slideInFromLeft 400ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.exploreExitChip:hover {
+  border-color: var(--sepia);
+  color: var(--accent);
+}
+
+.exploreExitKey {
+  display: inline-block;
+  padding: 1px 5px;
+  font-family: var(--font-body);
+  font-size: 0.68rem;
+  font-weight: 500;
+  background: var(--tan-light);
+  border: 1px solid var(--rule);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.exploreExitLabel {
+  color: var(--ink-faint);
+}
+
 /* ── Mobile ── */
 @media (max-width: 580px) {
   .panel {
