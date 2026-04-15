@@ -394,6 +394,56 @@ export async function getMySpotsAction(): Promise<MySpotListResult> {
 }
 
 // ---------------------------------------------------------------------------
+// getMapSpotsAction — return all visible spots for the map, including a
+// signed thumbnail URL for the first image (used in pin hover tooltips).
+// Uses batch signing to avoid N individual storage API calls.
+// ---------------------------------------------------------------------------
+export interface MapSpot {
+  id: string
+  title: string
+  lat: number
+  lng: number
+  spot_networks: { network_id: string }[]
+  thumb_url: string | null
+}
+
+export async function getMapSpotsAction(): Promise<MapSpot[]> {
+  const supabase = await createSupabaseServerClient()
+
+  const { data: rows } = await supabase
+    .from('spots')
+    .select('id, title, lat, lng, spot_networks(network_id), media(url, type)')
+
+  if (!rows) return []
+
+  // Collect first-image paths indexed by row position for batch signing
+  const toSign: { rowIdx: number; path: string }[] = []
+  rows.forEach((s, i) => {
+    const first = (s.media as { url: string; type: string }[]).find((m) => m.type === 'image')
+    if (first) toSign.push({ rowIdx: i, path: parseStoragePath(first.url) })
+  })
+
+  const signedByRow: Record<number, string> = {}
+  if (toSign.length > 0) {
+    const { data: signed } = await supabase.storage
+      .from('media')
+      .createSignedUrls(toSign.map((x) => x.path), 3600)
+    ;(signed ?? []).forEach((s, idx) => {
+      if (s.signedUrl) signedByRow[toSign[idx].rowIdx] = s.signedUrl
+    })
+  }
+
+  return rows.map((s, i) => ({
+    id: s.id,
+    title: s.title,
+    lat: s.lat,
+    lng: s.lng,
+    spot_networks: s.spot_networks as { network_id: string }[],
+    thumb_url: signedByRow[i] ?? null,
+  }))
+}
+
+// ---------------------------------------------------------------------------
 // searchSpotsAction — search spots by title or tag name, RLS-enforced.
 // Empty query returns [] without a DB round-trip.
 // ---------------------------------------------------------------------------

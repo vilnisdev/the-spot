@@ -62,10 +62,12 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
   }
 
   async function handleModalDelete() {
-    if (!spotDetail) return
-    const { error } = await deleteSpotAction(spotDetail.id)
+    const target = editingSpot ?? spotDetail
+    if (!target) return
+    const { error } = await deleteSpotAction(target.id)
     if (!error) {
-      setSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
+      setSpots((prev) => prev.filter((s) => s.id !== target.id))
+      setEditingSpot(null)
       setSpotDetail(null)
     }
   }
@@ -165,7 +167,6 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
         isAuthor={isAuthor}
         onClose={() => setSpotDetail(null)}
         onEdit={handleModalEdit}
-        onDelete={handleModalDelete}
         onPostComment={handlePostComment}
       />
 
@@ -176,6 +177,7 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
           networks={networks}
           onSave={handleEditSave}
           onCancel={handleEditCancel}
+          onDelete={handleModalDelete}
         />
       )}
     </div>

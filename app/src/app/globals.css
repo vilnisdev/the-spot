@@ -81,3 +81,52 @@ a {
     color-scheme: dark;
   }
 }
+
+/* ── Leaflet pin hover (outside CSS module scope) ── */
+.the-spot-pin {
+  color: var(--sepia);
+  cursor: pointer;
+  transition: color 200ms;
+}
+
+.the-spot-pin:hover {
+  color: var(--accent);
+}
+
+/* ── Pin hover tooltip ── */
+.the-spot-tooltip {
+  padding: 0 !important;
+  border: 1px solid var(--rule) !important;
+  border-radius: var(--radius) !important;
+  background: var(--modal-bg) !important;
+  box-shadow: 0 2px 8px rgba(44, 36, 22, 0.12) !important;
+}
+
+.the-spot-tooltip::before {
+  display: none !important;
+}
+
+.the-spot-tooltip-img {
+  display: block;
+  width: 120px;
+  height: 90px;
+  object-fit: cover;
+}
+
+.the-spot-tooltip-title {
+  display: block;
+  padding: 6px 10px;
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: var(--ink);
+  white-space: nowrap;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+.the-spot-tooltip-img + .the-spot-tooltip-title {
+  width: 120px;
+}
