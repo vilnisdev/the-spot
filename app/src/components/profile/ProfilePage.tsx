@@ -86,6 +86,17 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
     if (!('error' in result)) {
       setSpotDetail(result.spot)
       setIsAuthor(result.isAuthor)
+      // Reflect edits immediately on the profile card
+      const updatedNetworkNames = (result.spot.spot_networks ?? [])
+        .map((sn) => networks.find((n) => n.id === sn.network_id)?.name)
+        .filter((n): n is string => !!n)
+      setSpots((prev) =>
+        prev.map((s) =>
+          s.id !== result.spot.id
+            ? s
+            : { ...s, title: result.spot.title, state: result.spot.state ?? null, network_names: updatedNetworkNames }
+        )
+      )
     }
   }
 
