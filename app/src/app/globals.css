@@ -39,6 +39,40 @@
   }
 }
 
+/* Explicit theme overrides — source order beats the media query above at equal specificity.
+   Palette values duplicated intentionally; update all blocks when adding a new var. */
+:root[data-theme="light"] {
+  --paper: #FAF8F3;
+  --ink: #2C2416;
+  --ink-faint: #9A8C78;
+  --sepia: #8B7355;
+  --accent: #7A5C38;
+  --tan: #C4A882;
+  --tan-light: #E8DECE;
+  --rule: #D4C8B4;
+  --panel-bg: #F4F0E8;
+  --modal-bg: #FEFCF8;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
+:root[data-theme="dark"] {
+  --paper: #1A1610;
+  --ink: #E8E0D0;
+  --ink-faint: #7A7060;
+  --sepia: #A09070;
+  --accent: #C4A882;
+  --tan: #6A5840;
+  --tan-light: #2E2820;
+  --rule: #3A3028;
+  --panel-bg: #211E18;
+  --modal-bg: #1E1B14;
+
+  --background: var(--paper);
+  --foreground: var(--ink);
+}
+
 html {
   height: 100%;
 }
@@ -80,6 +114,14 @@ a {
   html {
     color-scheme: dark;
   }
+}
+
+html[data-theme="light"] {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 /* ── Leaflet pin hover (outside CSS module scope) ── */

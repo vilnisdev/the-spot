@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useCallback } from 'react'
 import { MapContainer, TileLayer, Marker, Tooltip, useMapEvents } from 'react-leaflet'
 import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
+import { useTheme } from '@/hooks/useTheme'
 
 interface SpotNetwork {
   network_id: string
@@ -103,15 +104,8 @@ function DropHandler({
 }
 
 export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpotClick, onMapReady }: MapViewProps) {
-  const [dark, setDark] = useState(false)
-
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    setDark(mq.matches)
-    const handler = (e: MediaQueryListEvent) => setDark(e.matches)
-    mq.addEventListener('change', handler)
-    return () => mq.removeEventListener('change', handler)
-  }, [])
+  const { resolved } = useTheme()
+  const dark = resolved === 'dark'
 
   const handleDrop = useCallback(onDrop, [onDrop])
   const center = centroid(spots)
