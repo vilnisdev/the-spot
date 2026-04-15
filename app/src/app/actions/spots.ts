@@ -325,6 +325,75 @@ export async function removeMediaAction(
 }
 
 // ---------------------------------------------------------------------------
+// getMySpotsAction — return authenticated user's spots for the profile page.
+// Includes first signed image URL per spot + network names.
+// ---------------------------------------------------------------------------
+export interface MySpot {
+  id: string
+  title: string
+  date: string | null
+  state: string | null
+  lat: number
+  lng: number
+  thumb_url: string | null
+  network_names: string[]
+}
+
+export type MySpotListResult =
+  | { spots: MySpot[]; username: string }
+  | { error: string }
+
+export async function getMySpotsAction(): Promise<MySpotListResult> {
+  const supabase = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('username')
+    .eq('id', user.id)
+    .single()
+
+  const { data: rows, error } = await supabase
+    .from('spots')
+    .select('id, title, date, state, lat, lng, spot_networks(network_id, networks(name)), media(url, type)')
+    .eq('author_id', user.id)
+    .order('created_at', { ascending: false })
+
+  if (error) return { error: error.message }
+
+  const spots: MySpot[] = []
+  for (const s of rows ?? []) {
+    const networkNames = (s.spot_networks as unknown as { networks: { name: string } | null }[])
+      .map((sn) => sn.networks?.name)
+      .filter((n): n is string => !!n)
+
+    const firstImage = (s.media as { url: string; type: string }[]).find((m) => m.type === 'image')
+    let thumbUrl: string | null = null
+    if (firstImage) {
+      const path = parseStoragePath(firstImage.url)
+      const { data: signed } = await supabase.storage.from('media').createSignedUrl(path, 3600)
+      thumbUrl = signed?.signedUrl ?? null
+    }
+
+    spots.push({
+      id: s.id,
+      title: s.title,
+      date: s.date ?? null,
+      state: s.state ?? null,
+      lat: s.lat,
+      lng: s.lng,
+      thumb_url: thumbUrl,
+      network_names: networkNames,
+    })
+  }
+
+  return { spots, username: profile?.username ?? user.email ?? 'User' }
+}
+
+// ---------------------------------------------------------------------------
 // searchSpotsAction — search spots by title or tag name, RLS-enforced.
 // Empty query returns [] without a DB round-trip.
 // ---------------------------------------------------------------------------

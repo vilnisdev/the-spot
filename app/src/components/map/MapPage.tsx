@@ -8,6 +8,7 @@ import SpotCreationForm from './SpotCreationForm'
 import SpotModal, { type SpotForModal } from './SpotModal'
 import SpotEditForm from './SpotEditForm'
 import MapSearchBar from './MapSearchBar'
+import { flyToAbovePin } from './mapHelpers'
 import {
   getSpotDetailAction,
   postCommentAction,
@@ -52,9 +53,10 @@ interface MapPageProps {
   spots: Spot[]
   networks: Network[]
   userId: string | null
+  initialSpotId: string | null
 }
 
-export default function MapPage({ spots: initialSpots, networks, userId: _userId }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelFullyClosed, setPanelFullyClosed] = useState(true)
@@ -73,10 +75,11 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
 
-  // Map instance ref for programmatic flyTo
-  const mapRef = useRef<L.Map | null>(null)
-  // Tracks spot coords when modal was opened via search, for re-center on close
-  const searchedSpotRef = useRef<{ lat: number; lng: number } | null>(null)
+  // Tracks pin coords whenever a modal is opened via offset flyTo (search,
+  // visit, or pin click) — used to pan back to true center on modal close.
+  const pinFocusRef = useRef<{ lat: number; lng: number } | null>(null)
+  // Pending flyTo when map isn't ready yet (e.g. arriving via /?spot=<id>)
+  const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null)
 
   // Esc exits drop mode
   useEffect(() => {
@@ -136,6 +139,26 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     return () => { supabase.removeChannel(channel) }
   }, [spotDetail?.id])
 
+  // ── Handle /?spot=<id> deep link ──
+  useEffect(() => {
+    if (!initialSpotId) return
+    setSelectedNetworkId(null)
+    window.history.replaceState(null, '', '/')
+    getSpotDetailAction(initialSpotId).then((result) => {
+      if ('error' in result) return
+      const { lat, lng } = result.spot
+      setSpotDetail(result.spot)
+      setIsAuthor(result.isAuthor)
+      pinFocusRef.current = { lat, lng }
+      pendingFlyToRef.current = { lat, lng }
+      if (mapRef.current) {
+        flyToAbovePin(mapRef.current, lat, lng)
+        pendingFlyToRef.current = null
+      }
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSpotId])
+
   function enterDropMode() {
     setDropMode(true)
     if (panelOpen) setPanelOpen(false)
@@ -177,12 +200,18 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   function handleMapReady(map: L.Map) {
     mapRef.current = map
+    if (pendingFlyToRef.current) {
+      flyToAbovePin(map, pendingFlyToRef.current.lat, pendingFlyToRef.current.lng)
+      pendingFlyToRef.current = null
+    }
   }
 
   // ── Spot modal interactions ──
 
   async function handleSpotClick(spot: Spot) {
     setSelectedSpot(spot)
+    pinFocusRef.current = { lat: spot.lat, lng: spot.lng }
+    if (mapRef.current) flyToAbovePin(mapRef.current, spot.lat, spot.lng)
     const result = await getSpotDetailAction(spot.id)
     if (!('error' in result)) {
       setSpotDetail(result.spot)
@@ -191,9 +220,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   function handleModalStartClose() {
-    if (searchedSpotRef.current) {
-      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
-      searchedSpotRef.current = null
+    if (pinFocusRef.current) {
+      mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
+      pinFocusRef.current = null
     }
   }
 
@@ -228,12 +257,16 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     const { error } = await deleteSpotAction(spotDetail.id)
     if (error) return
     setLiveSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
-    if (searchedSpotRef.current) {
-      mapRef.current?.panTo([searchedSpotRef.current.lat, searchedSpotRef.current.lng], { animate: true, duration: 0.4 })
-      searchedSpotRef.current = null
+    if (pinFocusRef.current) {
+      mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
+      pinFocusRef.current = null
     }
     setSpotDetail(null)
     setSelectedSpot(null)
+  }
+
+  async function handleSearchSelect(result: SearchSpotResult) {
+    await handleSpotClick({ ...result, spot_networks: [] })
   }
 
   async function handlePostComment(body: string) {
@@ -290,6 +323,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
             selected={selectedNetworkId}
             onChange={setSelectedNetworkId}
           />
+        </div>
+        <div className={styles.panelSection} style={{ marginTop: 'auto', borderTop: '1px solid var(--rule)' }}>
+          <a href="/profile" className={styles.panelNavLink}>My Profile →</a>
         </div>
       </aside>
 
