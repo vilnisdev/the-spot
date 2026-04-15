@@ -1,0 +1,40 @@
+.nav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-bg);
+}
+
+.link {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--sepia);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.link:hover {
+  color: var(--accent);
+}
+
+.current {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+
+.divider {
+  color: var(--rule);
+  font-size: 0.85rem;
+}
+
+@media (max-width: 480px) {
+  .nav {
+    padding: 14px 16px;
+  }
+}

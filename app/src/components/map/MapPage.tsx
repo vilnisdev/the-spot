@@ -325,7 +325,8 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           />
         </div>
         <div className={styles.panelSection} style={{ marginTop: 'auto', borderTop: '1px solid var(--rule)' }}>
-          <a href="/profile" className={styles.panelNavLink}>My Profile →</a>
+          <a href="/profile" className={styles.panelNavLink}>Profile</a>
+          <a href="/settings" className={styles.panelNavLink}>Settings</a>
         </div>
       </aside>
 

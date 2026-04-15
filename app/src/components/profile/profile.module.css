@@ -247,6 +247,27 @@
   border-color: #b04030;
 }
 
+/* ── Networks list ── */
+.networksList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.networkItem {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  letter-spacing: 0.01em;
+}
+
+.networkItem:last-child {
+  border-bottom: none;
+}
+
 /* ── Responsive ── */
 @media (max-width: 480px) {
   .profileHeader {
