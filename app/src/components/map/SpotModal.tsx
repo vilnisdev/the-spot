@@ -38,7 +38,6 @@ interface SpotModalProps {
   onClose: () => void
   onStartClose?: () => void
   onEdit: () => void
-  onDelete: () => void
   onPostComment: (body: string) => Promise<void>
 }
 
@@ -48,7 +47,7 @@ function formatCoords(lat: number, lng: number) {
   return `${latStr}, ${lngStr}`
 }
 
-export default function SpotModal({ spot, isAuthor, onClose, onStartClose, onEdit, onDelete, onPostComment }: SpotModalProps) {
+export default function SpotModal({ spot, isAuthor, onClose, onStartClose, onEdit, onPostComment }: SpotModalProps) {
   const [exiting, setExiting] = useState(false)
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null)
   const [commentText, setCommentText] = useState('')
@@ -129,7 +128,20 @@ export default function SpotModal({ spot, isAuthor, onClose, onStartClose, onEdi
 
         <div className={styles.inner}>
           {/* ── Title (full width) ── */}
-          <h2 className={styles.title}>{spot.title}</h2>
+          <div className={styles.titleRow}>
+            <h2 className={styles.title}>{spot.title}</h2>
+            {isAuthor && (
+              <button
+                type="button"
+                className={styles.editIconBtn}
+                onClick={onEdit}
+                aria-label="Edit spot"
+                title="Edit"
+              >
+                ✎
+              </button>
+            )}
+          </div>
 
           {/* ── Main two-column body ── */}
           <div className={styles.body}>
@@ -202,16 +214,6 @@ export default function SpotModal({ spot, isAuthor, onClose, onStartClose, onEdi
                 {spot.state && <AutofillRow label="State" value={spot.state} />}
               </div>
 
-              {isAuthor && (
-                <div className={styles.authorControls}>
-                  <button type="button" className={styles.btnEdit} onClick={onEdit}>
-                    Edit
-                  </button>
-                  <button type="button" className={styles.btnDelete} onClick={onDelete}>
-                    Delete
-                  </button>
-                </div>
-              )}
             </div>
           </div>
 

@@ -124,4 +124,9 @@ a {
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
+  box-sizing: border-box;
+}
+
+.the-spot-tooltip-img + .the-spot-tooltip-title {
+  width: 120px;
 }

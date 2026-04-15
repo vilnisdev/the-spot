@@ -16,6 +16,7 @@ interface SpotEditFormProps {
   networks: Network[]
   onSave: () => void
   onCancel: () => void
+  onDelete: () => void
 }
 
 const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
@@ -31,7 +32,7 @@ function displayToIso(displayDate: string | undefined): string {
   return parsed.toISOString().split('T')[0]
 }
 
-export default function SpotEditForm({ spot, networks, onSave, onCancel }: SpotEditFormProps) {
+export default function SpotEditForm({ spot, networks, onSave, onCancel, onDelete }: SpotEditFormProps) {
   const titleRef = useRef<HTMLInputElement>(null)
   const descRef = useRef<HTMLTextAreaElement>(null)
   const dateRef = useRef<HTMLInputElement>(null)
@@ -355,6 +356,14 @@ export default function SpotEditForm({ spot, networks, onSave, onCancel }: SpotE
             <div className={styles.actions}>
               <button type="submit" className={styles.btnPrimary} disabled={pending}>
                 {pending ? 'Saving…' : 'Save Changes'}
+              </button>
+              <button
+                type="button"
+                className={styles.btnDanger}
+                onClick={onDelete}
+                disabled={pending}
+              >
+                Delete
               </button>
             </div>
           </div>

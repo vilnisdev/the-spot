@@ -341,6 +341,31 @@
   cursor: not-allowed;
 }
 
+.btnDanger {
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 8px 20px;
+  background: transparent;
+  color: #9B3A2A;
+  border: 1px solid #9B3A2A;
+  cursor: pointer;
+  transition: opacity 150ms;
+  opacity: 0.85;
+  margin-left: auto;
+}
+
+.btnDanger:hover:not(:disabled) {
+  opacity: 1;
+}
+
+.btnDanger:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 /* ── Upload zone ── */
 .uploadZone {
   position: relative;

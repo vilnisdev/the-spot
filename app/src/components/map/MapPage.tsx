@@ -254,14 +254,16 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   async function handleDelete() {
-    if (!spotDetail) return
-    const { error } = await deleteSpotAction(spotDetail.id)
+    const target = editingSpot ?? spotDetail
+    if (!target) return
+    const { error } = await deleteSpotAction(target.id)
     if (error) return
-    setLiveSpots((prev) => prev.filter((s) => s.id !== spotDetail.id))
+    setLiveSpots((prev) => prev.filter((s) => s.id !== target.id))
     if (pinFocusRef.current) {
       mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
       pinFocusRef.current = null
     }
+    setEditingSpot(null)
     setSpotDetail(null)
     setSelectedSpot(null)
   }
@@ -383,7 +385,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         onStartClose={handleModalStartClose}
         onClose={handleModalClose}
         onEdit={handleEdit}
-        onDelete={handleDelete}
         onPostComment={handlePostComment}
       />
 
@@ -393,6 +394,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           networks={networks}
           onSave={handleEditSave}
           onCancel={handleEditCancel}
+          onDelete={handleDelete}
         />
       )}
     </div>

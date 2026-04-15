@@ -132,10 +132,10 @@ export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpo
           eventHandlers={{ click: () => onSpotClick(spot) }}
         >
           <Tooltip direction="top" offset={[0, -34]} opacity={1} className="the-spot-tooltip">
-            {spot.thumb_url
-              ? <img src={spot.thumb_url} alt={spot.title} className="the-spot-tooltip-img" />
-              : <span className="the-spot-tooltip-title">{spot.title}</span>
-            }
+            {spot.thumb_url && (
+              <img src={spot.thumb_url} alt="" className="the-spot-tooltip-img" />
+            )}
+            <span className="the-spot-tooltip-title">{spot.title}</span>
           </Tooltip>
         </Marker>
       ))}
