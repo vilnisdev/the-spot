@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import MapPage from '@/components/map/MapPage'
+import LandingPage from '@/components/landing/LandingPage'
 import { getMapSpotsAction } from '@/app/actions/spots'
 
 interface HomeProps {
@@ -8,12 +9,17 @@ interface HomeProps {
 
 export default async function Home({ searchParams }: HomeProps) {
   const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) {
+    return <LandingPage />
+  }
+
   const { spot } = await searchParams
 
-  const [spots, { data: networks }, { data: { user } }] = await Promise.all([
+  const [spots, { data: networks }] = await Promise.all([
     getMapSpotsAction(),
     supabase.from('networks').select('id, name').order('name'),
-    supabase.auth.getUser(),
   ])
 
   return (
@@ -21,7 +27,7 @@ export default async function Home({ searchParams }: HomeProps) {
       <MapPage
         spots={spots ?? []}
         networks={networks ?? []}
-        userId={user?.id ?? null}
+        userId={user.id}
         initialSpotId={spot ?? null}
       />
     </main>
