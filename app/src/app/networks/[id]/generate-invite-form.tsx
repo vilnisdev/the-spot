@@ -23,7 +23,7 @@ export default function GenerateInviteForm({ networkId }: Props) {
       <form action={action}>
         <input type="hidden" name="network_id" value={networkId} />
         <button type="submit" disabled={pending} className={styles.generateBtn}>
-          {pending ? 'Generating\u2026' : 'Generate invite link'}
+          {pending ? 'Generating\u2026' : 'Generate Invite Link'}
         </button>
       </form>
       {state?.error && <p role="alert" className={styles.formError}>{state.error}</p>}
