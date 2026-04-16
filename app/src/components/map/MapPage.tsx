@@ -5,8 +5,9 @@ import type L from 'leaflet'
 import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
-import SpotModal, { type SpotForModal } from './SpotModal'
-import SpotEditForm from './SpotEditForm'
+import SpotCard from './SpotCard'
+import SpotImmersive from './SpotImmersive'
+import type { SpotForModal } from './spotTypes'
 import MapSearchBar from './MapSearchBar'
 import ExploreExitChip from './ExploreExitChip'
 import { useExploreMode } from './useExploreMode'
@@ -59,6 +60,40 @@ interface MapPageProps {
   initialSpotId: string | null
 }
 
+type SpotStage =
+  | {
+      stage: 'card'
+      spot: SpotForModal
+      isAuthor: boolean
+      mediaIndex: number
+      loading: boolean
+      exiting: boolean
+      cardTopPx: number | null
+    }
+  | {
+      stage: 'immersive'
+      spot: SpotForModal
+      isAuthor: boolean
+      mediaIndex: number
+      editing: boolean
+      exiting: boolean
+      cardTopPx: number | null
+    }
+  | null
+
+function mapSpotToForModal(spot: Spot): SpotForModal {
+  return {
+    id: spot.id,
+    title: spot.title,
+    lat: spot.lat,
+    lng: spot.lng,
+    spot_networks: spot.spot_networks,
+    media: spot.thumb_url
+      ? [{ type: 'image', url: spot.thumb_url }]
+      : [],
+  }
+}
+
 export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
@@ -69,19 +104,14 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [formOpen, setFormOpen] = useState(false)
   const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
 
-  // Map instance ref for programmatic flyTo
   const mapRef = useRef<L.Map | null>(null)
 
-  // Spot modal state
-  const [selectedSpot, setSelectedSpot] = useState<Spot | null>(null)
-  const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
-  const [isAuthor, setIsAuthor] = useState(false)
-  const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
+  // ── Two-stage spot UI ──
+  const [spotStage, setSpotStage] = useState<SpotStage>(null)
 
-  // Explore mode — hides chrome for distraction-free map viewing
   const isModalOpen = useCallback(
-    () => spotDetail !== null || editingSpot !== null || formOpen,
-    [spotDetail, editingSpot, formOpen]
+    () => spotStage !== null || formOpen,
+    [spotStage, formOpen]
   )
   const { exploreMode, enterExplore, exitExplore } = useExploreMode({ isModalOpen })
 
@@ -91,10 +121,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     enterExplore()
   }
 
-  // Tracks pin coords whenever a modal is opened via offset flyTo (search,
-  // visit, or pin click) — used to pan back to true center on modal close.
   const pinFocusRef = useRef<{ lat: number; lng: number } | null>(null)
-  // Pending flyTo when map isn't ready yet (e.g. arriving via /?spot=<id>)
   const pendingFlyToRef = useRef<{ lat: number; lng: number } | null>(null)
 
   // Esc exits drop mode
@@ -110,9 +137,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   // ── Realtime: live comment updates ──
   useEffect(() => {
-    if (!spotDetail) return
+    if (!spotStage) return
     const supabase = createSupabaseBrowserClient()
-    const spotId = spotDetail.id
+    const spotId = spotStage.spot.id
 
     const channel = supabase
       .channel(`live-comments-${spotId}`)
@@ -121,10 +148,9 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         { event: 'INSERT', schema: 'public', table: 'comments', filter: `spot_id=eq.${spotId}` },
         (payload) => {
           const row = payload.new as { id: string; body: string; created_at: string }
-          setSpotDetail((prev) => {
+          setSpotStage((prev) => {
             if (!prev) return prev
-            if (prev.comments?.some((c) => c.id === row.id)) return prev
-            // Fetch with author join — payload doesn't include joined columns
+            if (prev.spot.comments?.some((c) => c.id === row.id)) return prev
             supabase
               .from('comments')
               .select('id, body, created_at, profiles!author_id(username)')
@@ -140,10 +166,13 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
                     month: 'long', day: 'numeric', year: 'numeric',
                   }),
                 }
-                setSpotDetail((p) => {
+                setSpotStage((p) => {
                   if (!p) return p
-                  if (p.comments?.some((c) => c.id === comment.id)) return p
-                  return { ...p, comments: [...(p.comments ?? []), comment] }
+                  if (p.spot.comments?.some((x) => x.id === comment.id)) return p
+                  return {
+                    ...p,
+                    spot: { ...p.spot, comments: [...(p.spot.comments ?? []), comment] },
+                  }
                 })
               })
             return prev
@@ -153,20 +182,33 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [spotDetail?.id])
+  }, [spotStage?.spot.id])
 
-  // ── Handle /?spot=<id> deep link ──
+  // ── URL ↔ spot id sync (replaceState, no history entries) ──
+  useEffect(() => {
+    const id = spotStage?.spot.id
+    window.history.replaceState(null, '', id ? `/?spot=${id}` : '/')
+  }, [spotStage?.spot.id])
+
+  // ── Handle /?spot=<id> deep link → opens in immersive ──
   useEffect(() => {
     if (!initialSpotId) return
     setSelectedNetworkId(null)
-    window.history.replaceState(null, '', '/')
     getSpotDetailAction(initialSpotId).then((result) => {
       if ('error' in result) return
       const { lat, lng } = result.spot
-      setSpotDetail(result.spot)
-      setIsAuthor(result.isAuthor)
       pinFocusRef.current = { lat, lng }
       pendingFlyToRef.current = { lat, lng }
+      const cardTopPx = computeCardTopPx()
+      setSpotStage({
+        stage: 'immersive',
+        spot: result.spot,
+        isAuthor: result.isAuthor,
+        mediaIndex: 0,
+        editing: false,
+        exiting: false,
+        cardTopPx,
+      })
       if (mapRef.current) {
         flyToAbovePin(mapRef.current, lat, lng)
         pendingFlyToRef.current = null
@@ -175,7 +217,14 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSpotId])
 
+  function computeCardTopPx(): number | null {
+    const h = mapRef.current?.getContainer().clientHeight
+    if (!h) return null
+    return Math.round(h * 0.52)
+  }
+
   function enterDropMode() {
+    setSpotStage(null)
     setDropMode(true)
     if (panelOpen) setPanelOpen(false)
   }
@@ -212,8 +261,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     setDropMode(false)
   }
 
-  // ── Map ref callbacks ──
-
   function handleMapReady(map: L.Map) {
     mapRef.current = map
     if (pendingFlyToRef.current) {
@@ -222,55 +269,120 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     }
   }
 
-  // ── Spot modal interactions ──
+  // ── Spot stage handlers ──
 
   async function handleSpotClick(spot: Spot) {
-    setSelectedSpot(spot)
     pinFocusRef.current = { lat: spot.lat, lng: spot.lng }
     if (mapRef.current) flyToAbovePin(mapRef.current, spot.lat, spot.lng)
+    const cardTopPx = computeCardTopPx()
+    // Instant swap: immediately render a card with stale data
+    setSpotStage({
+      stage: 'card',
+      spot: mapSpotToForModal(spot),
+      isAuthor: false,
+      mediaIndex: 0,
+      loading: true,
+      exiting: false,
+      cardTopPx,
+    })
     const result = await getSpotDetailAction(spot.id)
-    if (!('error' in result)) {
-      setSpotDetail(result.spot)
-      setIsAuthor(result.isAuthor)
+    if ('error' in result) {
+      setSpotStage((prev) =>
+        prev && prev.stage === 'card' && prev.spot.id === spot.id
+          ? { ...prev, loading: false }
+          : prev
+      )
+      return
     }
+    setSpotStage((prev) => {
+      if (!prev || prev.spot.id !== spot.id) return prev
+      if (prev.stage === 'card') {
+        return {
+          ...prev,
+          spot: result.spot,
+          isAuthor: result.isAuthor,
+          loading: false,
+        }
+      }
+      return prev
+    })
   }
 
-  function handleModalStartClose() {
+  function handleCardClose() {
+    if (!spotStage) return
     if (pinFocusRef.current) {
       mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
       pinFocusRef.current = null
     }
+    setSpotStage((prev) => (prev && prev.stage === 'card' ? { ...prev, exiting: true } : prev))
+    setTimeout(() => {
+      setSpotStage((prev) => (prev && prev.stage === 'card' && prev.exiting ? null : prev))
+    }, 200)
   }
 
-  function handleModalClose() {
-    setSpotDetail(null)
-    setSelectedSpot(null)
+  function handleCardExpand() {
+    setSpotStage((prev) => {
+      if (!prev || prev.stage !== 'card') return prev
+      return {
+        stage: 'immersive',
+        spot: prev.spot,
+        isAuthor: prev.isAuthor,
+        mediaIndex: prev.mediaIndex,
+        editing: false,
+        exiting: false,
+        cardTopPx: prev.cardTopPx,
+      }
+    })
   }
 
-  function handleEdit() {
-    setEditingSpot(spotDetail)
-    setSpotDetail(null)
+  function handleImmersiveBack() {
+    setSpotStage((prev) => {
+      if (!prev || prev.stage !== 'immersive') return prev
+      return { ...prev, exiting: true }
+    })
+    setTimeout(() => {
+      setSpotStage((prev) => {
+        if (!prev || prev.stage !== 'immersive') return prev
+        return {
+          stage: 'card',
+          spot: prev.spot,
+          isAuthor: prev.isAuthor,
+          mediaIndex: prev.mediaIndex,
+          loading: false,
+          exiting: false,
+          cardTopPx: prev.cardTopPx,
+        }
+      })
+    }, 220)
+  }
+
+  function handleMediaIndexChange(idx: number) {
+    setSpotStage((prev) => (prev ? { ...prev, mediaIndex: idx } : prev))
   }
 
   async function handleEditSave() {
-    if (!editingSpot) return
-    const result = await getSpotDetailAction(editingSpot.id)
-    setEditingSpot(null)
-    if (!('error' in result)) {
-      setSpotDetail(result.spot)
-      setIsAuthor(result.isAuthor)
-    }
+    if (!spotStage) return
+    const result = await getSpotDetailAction(spotStage.spot.id)
+    if ('error' in result) return
+    setSpotStage((prev) => {
+      if (!prev || prev.stage !== 'immersive') return prev
+      return {
+        ...prev,
+        spot: result.spot,
+        isAuthor: result.isAuthor,
+        editing: false,
+        mediaIndex: 0,
+      }
+    })
   }
 
   function handleEditCancel() {
-    const snapshot = editingSpot ?? null
-    setEditingSpot(null)
-    setSpotDetail(snapshot)
+    setSpotStage((prev) => (prev && prev.stage === 'immersive' ? { ...prev, editing: false } : prev))
   }
 
   async function handleDelete() {
-    const target = editingSpot ?? spotDetail
-    if (!target) return
+    if (!spotStage) return
+    const target = spotStage.spot
     const { error } = await deleteSpotAction(target.id)
     if (error) return
     setLiveSpots((prev) => prev.filter((s) => s.id !== target.id))
@@ -278,9 +390,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       mapRef.current?.panTo([pinFocusRef.current.lat, pinFocusRef.current.lng], { animate: true, duration: 0.4 })
       pinFocusRef.current = null
     }
-    setEditingSpot(null)
-    setSpotDetail(null)
-    setSelectedSpot(null)
+    setSpotStage(null)
   }
 
   async function handleSearchSelect(result: SearchSpotResult) {
@@ -288,14 +398,15 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   }
 
   async function handlePostComment(body: string) {
-    if (!spotDetail) return
-    const result = await postCommentAction(spotDetail.id, body)
-    if (!('error' in result)) {
-      const newComment = result.comment
-      setSpotDetail((prev) =>
-        prev ? { ...prev, comments: [...(prev.comments ?? []), newComment] } : prev
-      )
-    }
+    if (!spotStage) return
+    const result = await postCommentAction(spotStage.spot.id, body)
+    if ('error' in result) return
+    const newComment = result.comment
+    setSpotStage((prev) =>
+      prev
+        ? { ...prev, spot: { ...prev.spot, comments: [...(prev.spot.comments ?? []), newComment] } }
+        : prev
+    )
   }
 
   const visibleSpots =
@@ -307,7 +418,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   return (
     <div className={styles.layout}>
-      {/* Fixed button on map — shown only after panel fully slides out */}
       {panelFullyClosed && !exploreMode && (
         <button
           className={styles.menuBtn}
@@ -370,7 +480,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         {!exploreMode && <MapSearchBar onSelectSpot={handleSearchSelect} />}
       </div>
 
-      {/* Drop mode banner */}
       {dropMode && (
         <div className={formStyles.dropBanner} role="status">
           <span>Click the map to place your spot — Esc to cancel</span>
@@ -385,7 +494,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         </div>
       )}
 
-      {/* Add Spot button */}
       {!exploreMode && (
         <button
           type="button"
@@ -406,21 +514,35 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         onCancel={handleCancel}
       />
 
-      <SpotModal
-        spot={spotDetail}
-        isAuthor={isAuthor}
-        onStartClose={handleModalStartClose}
-        onClose={handleModalClose}
-        onEdit={handleEdit}
-        onPostComment={handlePostComment}
-      />
+      {spotStage && spotStage.stage === 'card' && (
+        <SpotCard
+          key={spotStage.spot.id}
+          spot={spotStage.spot}
+          mediaIndex={spotStage.mediaIndex}
+          onMediaIndexChange={handleMediaIndexChange}
+          onClose={handleCardClose}
+          onExpand={handleCardExpand}
+          loading={spotStage.loading}
+          panelOpen={panelOpen}
+          cardTopPx={spotStage.cardTopPx}
+          exiting={spotStage.exiting}
+        />
+      )}
 
-      {editingSpot && (
-        <SpotEditForm
-          spot={editingSpot}
+      {spotStage && spotStage.stage === 'immersive' && (
+        <SpotImmersive
+          key={spotStage.spot.id}
+          spot={spotStage.spot}
+          isAuthor={spotStage.isAuthor}
           networks={networks}
-          onSave={handleEditSave}
-          onCancel={handleEditCancel}
+          mediaIndex={spotStage.mediaIndex}
+          onMediaIndexChange={handleMediaIndexChange}
+          initialEditing={spotStage.editing}
+          exiting={spotStage.exiting}
+          onBack={handleImmersiveBack}
+          onPostComment={handlePostComment}
+          onEditSave={handleEditSave}
+          onEditCancel={handleEditCancel}
           onDelete={handleDelete}
         />
       )}

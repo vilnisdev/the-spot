@@ -1,7 +1,7 @@
 'use server'
 
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import type { SpotForModal, SpotMedia, SpotComment } from '@/components/map/SpotModal'
+import type { SpotForModal, SpotMedia, SpotComment } from '@/components/map/spotTypes'
 
 export interface CreatedSpot {
   id: string
