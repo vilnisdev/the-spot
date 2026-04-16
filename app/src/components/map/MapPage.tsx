@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import NetworkFilter from './NetworkFilter'
 import SpotCreationForm from './SpotCreationForm'
 import SpotCard from './SpotCard'
+import SpotConnector from './SpotConnector'
 import SpotImmersive from './SpotImmersive'
 import type { SpotForModal } from './spotTypes'
 import MapSearchBar from './MapSearchBar'
@@ -103,6 +104,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   const [droppedLatLng, setDroppedLatLng] = useState<LatLng | null>(null)
 
   const mapRef = useRef<L.Map | null>(null)
+  const cardRef = useRef<HTMLDivElement>(null)
 
   // ── Two-stage spot UI ──
   const [spotStage, setSpotStage] = useState<SpotStage>(null)
@@ -500,17 +502,29 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       />
 
       {spotStage && spotStage.stage === 'card' && (
-        <SpotCard
-          key={spotStage.spot.id}
-          spot={spotStage.spot}
-          mediaIndex={spotStage.mediaIndex}
-          onMediaIndexChange={handleMediaIndexChange}
-          onClose={handleCardClose}
-          onExpand={handleCardExpand}
-          loading={spotStage.loading}
-          panelOpen={panelOpen}
-          exiting={spotStage.exiting}
-        />
+        <>
+          <SpotCard
+            ref={cardRef}
+            key={spotStage.spot.id}
+            spot={spotStage.spot}
+            mediaIndex={spotStage.mediaIndex}
+            onMediaIndexChange={handleMediaIndexChange}
+            onClose={handleCardClose}
+            onExpand={handleCardExpand}
+            loading={spotStage.loading}
+            panelOpen={panelOpen}
+            exiting={spotStage.exiting}
+          />
+          {mapRef.current && (
+            <SpotConnector
+              map={mapRef.current}
+              lat={spotStage.spot.lat}
+              lng={spotStage.spot.lng}
+              cardRef={cardRef}
+              visible={!spotStage.exiting}
+            />
+          )}
+        </>
       )}
 
       {spotStage && spotStage.stage === 'immersive' && (

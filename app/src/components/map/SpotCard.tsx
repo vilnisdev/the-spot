@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { SpotForModal } from './spotTypes'
 import styles from './spotCard.module.css'
 
@@ -26,7 +26,7 @@ function truncate(text: string, max: number): string {
   return text.slice(0, max).trimEnd() + '…'
 }
 
-export default function SpotCard({
+const SpotCard = forwardRef<HTMLDivElement, SpotCardProps>(function SpotCard({
   spot,
   mediaIndex,
   onMediaIndexChange,
@@ -35,7 +35,7 @@ export default function SpotCard({
   loading,
   panelOpen,
   exiting,
-}: SpotCardProps) {
+}, ref) {
   const [imgError, setImgError] = useState(false)
   const [loadTimeout, setLoadTimeout] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -143,6 +143,7 @@ export default function SpotCard({
 
   return (
     <div
+      ref={ref}
       className={`${styles.card} ${exiting ? styles.cardExiting : ''}`}
       style={heroStyle}
       role="dialog"
@@ -276,4 +277,6 @@ export default function SpotCard({
       )}
     </div>
   )
-}
+})
+
+export default SpotCard
