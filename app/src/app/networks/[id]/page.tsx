@@ -7,7 +7,9 @@ import {
   removeMemberAction,
 } from '@/app/actions/networks'
 import { revokeInvitationAction } from '@/app/actions/invitations'
+import PageNav from '@/components/shared/PageNav'
 import GenerateInviteForm from './generate-invite-form'
+import styles from './networkDetail.module.css'
 
 interface Props {
   params: Promise<{ id: string }>
@@ -41,7 +43,7 @@ export default async function NetworkDetailPage({ params }: Props) {
     .from('memberships')
     .select('role, user_id, profiles(username)')
     .eq('network_id', id)
-    .order('role', { ascending: false }) // 'owner' before 'member'
+    .order('role', { ascending: false })
 
   const { data: activeInvitations } = await supabase
     .from('invitations')
@@ -55,86 +57,93 @@ export default async function NetworkDetailPage({ params }: Props) {
   const isOwner = network.owner_id === user!.id
 
   return (
-    <main>
-      <nav>
-        <a href="/networks">← Networks</a>
-      </nav>
+    <div className={styles.page}>
+      <PageNav />
 
-      <h1>{network.name}</h1>
+      <header className={styles.header}>
+        <h1 className={styles.title}>{network.name}</h1>
+        <p className={styles.subtitle}>
+          {members.length} member{members.length === 1 ? '' : 's'}
+        </p>
+      </header>
 
       {isOwner && (
-        <section>
-          <h2>Rename</h2>
+        <section className={styles.section}>
+          <p className={styles.sectionLabel}>Rename</p>
           <form action={renameNetworkAction}>
             <input type="hidden" name="network_id" value={id} />
-            <label htmlFor="rename-input">New name</label>
+            <label htmlFor="rename-input" className={styles.fieldLabel}>New name</label>
             <input
               id="rename-input"
               name="name"
               type="text"
               defaultValue={network.name}
               required
+              className={styles.input}
               suppressHydrationWarning
             />
-            <button type="submit">Save</button>
+            <button type="submit" className={styles.saveBtn}>Save</button>
           </form>
         </section>
       )}
 
-      <section>
-        <h2>Invite Members</h2>
+      <section className={styles.section}>
+        <p className={styles.sectionLabel}>Invitations</p>
         <GenerateInviteForm networkId={id} />
         {isOwner && activeInvitations && activeInvitations.length > 0 && (
-          <div>
-            <h3>Active invite links</h3>
-            <ul>
-              {activeInvitations.map((inv) => (
-                <li key={inv.id}>
-                  <span>Expires: {new Date(inv.expires_at).toLocaleDateString()}</span>
-                  <form action={revokeInvitationAction} style={{ display: 'inline', marginLeft: '0.5rem' }}>
-                    <input type="hidden" name="invitation_id" value={inv.id} />
-                    <input type="hidden" name="network_id" value={id} />
-                    <button type="submit">Revoke</button>
-                  </form>
-                </li>
-              ))}
-            </ul>
-          </div>
+          <ul className={styles.inviteList}>
+            {activeInvitations.map((inv) => (
+              <li key={inv.id} className={styles.inviteItem}>
+                <span className={styles.inviteExpiry}>
+                  Expires {new Date(inv.expires_at).toLocaleDateString()}
+                </span>
+                <form action={revokeInvitationAction} className={styles.inlineForm}>
+                  <input type="hidden" name="invitation_id" value={inv.id} />
+                  <input type="hidden" name="network_id" value={id} />
+                  <button type="submit" className={styles.inlineBtn}>Revoke</button>
+                </form>
+              </li>
+            ))}
+          </ul>
         )}
       </section>
 
-      <section>
-        <h2>Members</h2>
-        <ul>
-          {members.map((m) => (
-            <li key={m.user_id}>
-              <span>{m.profiles?.username ?? m.user_id}</span>
-              <span> — {m.role}</span>
-              {isOwner && m.user_id !== user!.id && (
-                <form action={removeMemberAction} style={{ display: 'inline', marginLeft: '0.5rem' }}>
-                  <input type="hidden" name="network_id" value={id} />
-                  <input type="hidden" name="user_id" value={m.user_id} />
-                  <button type="submit">Remove</button>
-                </form>
-              )}
-            </li>
-          ))}
-        </ul>
+      <section className={styles.section}>
+        <p className={styles.sectionLabel}>Members</p>
+        {members.length > 0 ? (
+          <ul className={styles.memberList}>
+            {members.map((m) => (
+              <li key={m.user_id} className={styles.memberItem}>
+                <span className={styles.memberName}>{m.profiles?.username ?? m.user_id}</span>
+                <span className={styles.memberRole}>{m.role}</span>
+                {isOwner && m.user_id !== user!.id && (
+                  <form action={removeMemberAction} className={styles.inlineForm}>
+                    <input type="hidden" name="network_id" value={id} />
+                    <input type="hidden" name="user_id" value={m.user_id} />
+                    <button type="submit" className={styles.inlineBtn}>Remove</button>
+                  </form>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className={styles.emptyState}>No members yet.</p>
+        )}
       </section>
 
-      <section>
+      <section className={styles.dangerSection}>
         {isOwner ? (
           <form action={deleteNetworkAction}>
             <input type="hidden" name="network_id" value={id} />
-            <button type="submit">Delete Network</button>
+            <button type="submit" className={styles.dangerBtn}>Delete Network</button>
           </form>
         ) : (
           <form action={leaveNetworkAction}>
             <input type="hidden" name="network_id" value={id} />
-            <button type="submit">Leave Network</button>
+            <button type="submit" className={styles.leaveBtn}>Leave Network</button>
           </form>
         )}
       </section>
-    </main>
+    </div>
   )
 }

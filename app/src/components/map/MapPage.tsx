@@ -354,6 +354,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
             Explore
           </button>
           <a href="/profile" className={styles.panelNavLink}>Profile</a>
+          <a href="/networks" className={styles.panelNavLink}>Networks</a>
           <a href="/settings" className={styles.panelNavLink}>Settings</a>
         </div>
       </aside>
