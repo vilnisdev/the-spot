@@ -69,10 +69,8 @@ export default async function NetworkDetailPage({ params }: Props) {
 
       {isOwner && (
         <section className={styles.section}>
-          <p className={styles.sectionLabel}>Rename</p>
           <form action={renameNetworkAction}>
             <input type="hidden" name="network_id" value={id} />
-            <label htmlFor="rename-input" className={styles.fieldLabel}>New name</label>
             <input
               id="rename-input"
               name="name"
@@ -88,7 +86,6 @@ export default async function NetworkDetailPage({ params }: Props) {
       )}
 
       <section className={styles.section}>
-        <p className={styles.sectionLabel}>Invitations</p>
         <GenerateInviteForm networkId={id} />
         {isOwner && activeInvitations && activeInvitations.length > 0 && (
           <ul className={styles.inviteList}>
