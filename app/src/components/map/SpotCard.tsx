@@ -12,7 +12,6 @@ interface SpotCardProps {
   onExpand: () => void
   loading: boolean
   panelOpen: boolean
-  cardTopPx: number | null
   exiting: boolean
 }
 
@@ -35,7 +34,6 @@ export default function SpotCard({
   onExpand,
   loading,
   panelOpen,
-  cardTopPx,
   exiting,
 }: SpotCardProps) {
   const [imgError, setImgError] = useState(false)
@@ -134,9 +132,6 @@ export default function SpotCard({
   }, [spot.description])
 
   const heroStyle: React.CSSProperties = {}
-  if (cardTopPx !== null) {
-    ;(heroStyle as Record<string, string>)['--card-top'] = `${cardTopPx}px`
-  }
   ;(heroStyle as Record<string, string>)['--card-offset'] = panelOpen ? '150px' : '0px'
 
   function handleHeroClick() {

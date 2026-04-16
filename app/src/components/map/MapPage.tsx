@@ -68,7 +68,6 @@ type SpotStage =
       mediaIndex: number
       loading: boolean
       exiting: boolean
-      cardTopPx: number | null
     }
   | {
       stage: 'immersive'
@@ -77,7 +76,6 @@ type SpotStage =
       mediaIndex: number
       editing: boolean
       exiting: boolean
-      cardTopPx: number | null
     }
   | null
 
@@ -199,7 +197,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       const { lat, lng } = result.spot
       pinFocusRef.current = { lat, lng }
       pendingFlyToRef.current = { lat, lng }
-      const cardTopPx = computeCardTopPx()
       setSpotStage({
         stage: 'immersive',
         spot: result.spot,
@@ -207,7 +204,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         mediaIndex: 0,
         editing: false,
         exiting: false,
-        cardTopPx,
       })
       if (mapRef.current) {
         flyToAbovePin(mapRef.current, lat, lng)
@@ -216,12 +212,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
     })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSpotId])
-
-  function computeCardTopPx(): number | null {
-    const h = mapRef.current?.getContainer().clientHeight
-    if (!h) return null
-    return Math.round(h * 0.52)
-  }
 
   function enterDropMode() {
     setSpotStage(null)
@@ -274,8 +264,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
   async function handleSpotClick(spot: Spot) {
     pinFocusRef.current = { lat: spot.lat, lng: spot.lng }
     if (mapRef.current) flyToAbovePin(mapRef.current, spot.lat, spot.lng)
-    const cardTopPx = computeCardTopPx()
-    // Instant swap: immediately render a card with stale data
     setSpotStage({
       stage: 'card',
       spot: mapSpotToForModal(spot),
@@ -283,7 +271,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
       mediaIndex: 0,
       loading: true,
       exiting: false,
-      cardTopPx,
     })
     const result = await getSpotDetailAction(spot.id)
     if ('error' in result) {
@@ -330,7 +317,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         mediaIndex: prev.mediaIndex,
         editing: false,
         exiting: false,
-        cardTopPx: prev.cardTopPx,
       }
     })
   }
@@ -350,7 +336,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           mediaIndex: prev.mediaIndex,
           loading: false,
           exiting: false,
-          cardTopPx: prev.cardTopPx,
         }
       })
     }, 220)
@@ -524,7 +509,6 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           onExpand={handleCardExpand}
           loading={spotStage.loading}
           panelOpen={panelOpen}
-          cardTopPx={spotStage.cardTopPx}
           exiting={spotStage.exiting}
         />
       )}

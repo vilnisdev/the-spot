@@ -1,7 +1,7 @@
 .card {
   position: fixed;
   left: calc(50% + var(--card-offset, 0px));
-  top: var(--card-top, 52vh);
+  bottom: 90px;
   transform: translateX(-50%);
   width: min(22rem, calc(100vw - 1.5rem));
   background: var(--modal-bg);
@@ -286,8 +286,6 @@
 
 @media (max-width: 640px) {
   .card {
-    top: auto;
-    bottom: 1rem;
     left: 50%;
     transform: translateX(-50%);
     transform-origin: bottom center;
