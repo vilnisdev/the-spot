@@ -32,6 +32,8 @@
 | **Spot Modal** | The panel that opens when a Pin is clicked, displaying a Spot's full details | Popup, drawer, detail view, card |
 | **Fly-to** | The animated map transition that moves the viewport to a Spot's location | Pan, jump, navigate, zoom-to |
 | **Drop** | The act of placing a Pin on the map to begin creating a new Spot | Place, add, create (in map context) |
+| **Drop mode** | The transient state the map enters after a Member chooses to add a Spot, during which the next map click becomes the Drop point | Add mode, placement mode |
+| **Explore mode** | A distraction-free map viewing state that hides all chrome (side panel trigger, search bar, Add Spot button), leaving only an `esc` exit chip. Pins remain clickable. Ephemeral — lost on reload. Distinct from Drop mode: Explore is for viewing, Drop is for creating | Focus mode, fullscreen mode, immersive mode |
 
 ## Spot Details
 

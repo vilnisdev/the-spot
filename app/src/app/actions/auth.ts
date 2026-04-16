@@ -22,14 +22,40 @@ export async function registerAction(
     return { error: 'All fields are required.' }
   }
 
+  const inviteToken = formData.get('invite_token') as string | null
+
   const supabase = await createSupabaseServerClient()
-  const { error } = await supabase.auth.signUp({
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { data: { username } },
+    options: {
+      data: { username },
+      // If an invite token is present, route the confirmation email back through
+      // the invite page so the user lands there already authenticated.
+      ...(inviteToken && {
+        emailRedirectTo: `${siteUrl}/auth/confirm?next=/invite/${inviteToken}`,
+      }),
+    },
   })
 
   if (error) return { error: error.message }
+
+  // Email confirmation disabled — session is available immediately. Join now.
+  if (inviteToken && data.session) {
+    const { data: networkId } = await supabase.rpc('join_by_token', { p_token: inviteToken })
+    if (networkId) redirect(`/networks/${networkId}`)
+  }
+
+  // No session yet (email confirmation required). If there's an invite token,
+  // tell the user to confirm their email and return to the invite link after.
+  if (inviteToken && !data.session) {
+    return {
+      message: `Check your email for a confirmation link. After confirming, return to ${siteUrl}/invite/${inviteToken} to join the network.`,
+    }
+  }
+
   redirect('/')
 }
 

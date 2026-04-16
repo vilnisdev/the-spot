@@ -1,0 +1,282 @@
+/* ── Page layout ── */
+.page {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+/* ── Top nav bar ── */
+.topNav {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--panel-bg);
+}
+
+.backLink {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--sepia);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+}
+
+.backLink:hover {
+  color: var(--accent);
+}
+
+.navDivider {
+  color: var(--rule);
+  font-size: 0.85rem;
+}
+
+.navTitle {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--ink-faint);
+  letter-spacing: 0.02em;
+}
+
+/* ── Profile header ── */
+.profileHeader {
+  padding: 32px 24px 24px;
+  border-bottom: 1px solid var(--rule);
+  background: var(--modal-bg);
+}
+
+.username {
+  font-family: var(--font-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: 0.01em;
+  margin: 0 0 6px;
+}
+
+.spotCount {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: var(--ink-faint);
+  letter-spacing: 0.04em;
+}
+
+/* ── Section ── */
+.section {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 24px 24px 48px;
+}
+
+.sectionLabel {
+  font-family: var(--font-serif);
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--ink-faint);
+  margin-bottom: 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--rule);
+}
+
+/* ── Spots list ── */
+.spotsList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.emptyState {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-weight: 300;
+  color: var(--ink-faint);
+  padding: 24px 0;
+  font-style: italic;
+}
+
+/* ── Spot card ── */
+.spotCard {
+  display: flex;
+  gap: 14px;
+  padding: 14px 8px;
+  border-bottom: 1px solid var(--rule);
+  cursor: pointer;
+  position: relative;
+  transition: background 160ms;
+  margin: 0 -8px;
+}
+
+.spotCard:hover {
+  background: var(--tan-light);
+}
+
+/* Thumb */
+.thumb {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border: 1px solid var(--rule);
+  display: block;
+}
+
+.thumbPlaceholder {
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+  background: var(--tan-light);
+  border: 1px solid var(--rule);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+}
+
+/* Meta column */
+.meta {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding-right: 104px; /* leave room for 3 control buttons */
+}
+
+.cardTitle {
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin: 0;
+}
+
+.cardSub {
+  font-family: var(--font-serif);
+  font-size: 0.8rem;
+  font-weight: 300;
+  color: var(--ink-faint);
+}
+
+.networkPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.networkPill {
+  font-family: var(--font-serif);
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--sepia);
+  border: 1px solid var(--tan);
+  padding: 2px 7px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+/* ── Card controls ── */
+/* Desktop: fade in on hover */
+.cardControls {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+/* Hover device: fade in on card hover */
+@media (hover: hover) {
+  .visitBtn,
+  .editBtn,
+  .deleteBtn {
+    opacity: 0;
+    transition: opacity 160ms;
+    pointer-events: none;
+  }
+  .spotCard:hover .visitBtn,
+  .spotCard:hover .editBtn,
+  .spotCard:hover .deleteBtn {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.visitBtn,
+.editBtn,
+.deleteBtn {
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--rule);
+  background: var(--modal-bg);
+  color: var(--ink-faint);
+  cursor: pointer;
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+  transition: color 160ms, border-color 160ms;
+  flex-shrink: 0;
+}
+
+.visitBtn:hover {
+  color: var(--sepia);
+  border-color: var(--sepia);
+}
+
+.editBtn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.deleteBtn:hover {
+  color: #b04030;
+  border-color: #b04030;
+}
+
+/* ── Networks list ── */
+.networksList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.networkItem {
+  font-family: var(--font-serif);
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--ink);
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+  letter-spacing: 0.01em;
+}
+
+.networkItem:last-child {
+  border-bottom: none;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+  .profileHeader {
+    padding: 24px 16px 20px;
+  }
+  .section {
+    padding: 20px 16px 40px;
+  }
+  .topNav {
+    padding: 14px 16px;
+  }
+}

@@ -37,7 +37,7 @@ Apply migrations to your Supabase project via the Supabase CLI or dashboard (`su
 npm run dev
 ```
 
-Opens at [http://localhost:3000](http://localhost:3000).
+Opens at [http://localhost:3000](http://localhost:3001).
 
 ---
 

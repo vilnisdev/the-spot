@@ -1,26 +1,35 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
-import { logoutAction } from '@/app/actions/auth'
+import MapPage from '@/components/map/MapPage'
+import LandingPage from '@/components/landing/LandingPage'
+import { getMapSpotsAction } from '@/app/actions/spots'
 
-export default async function Home() {
+interface HomeProps {
+  searchParams: Promise<{ spot?: string }>
+}
+
+export default async function Home({ searchParams }: HomeProps) {
   const supabase = await createSupabaseServerClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('username')
-    .eq('id', user!.id)
-    .single()
+  if (!user) {
+    return <LandingPage />
+  }
+
+  const { spot } = await searchParams
+
+  const [spots, { data: networks }] = await Promise.all([
+    getMapSpotsAction(),
+    supabase.from('networks').select('id, name').order('name'),
+  ])
 
   return (
-    <main>
-      <header>
-        <span>Welcome, {profile?.username ?? user!.email}</span>
-        <form action={logoutAction}>
-          <button type="submit">Log out</button>
-        </form>
-      </header>
+    <main style={{ height: '100vh', overflow: 'hidden' }}>
+      <MapPage
+        spots={spots ?? []}
+        networks={networks ?? []}
+        userId={user.id}
+        initialSpotId={spot ?? null}
+      />
     </main>
   )
 }

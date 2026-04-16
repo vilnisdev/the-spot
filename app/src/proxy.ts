@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 
 const PUBLIC_PATHS = new Set([
+  '/',
   '/login',
   '/register',
   '/forgot-password',
@@ -45,7 +46,7 @@ export async function proxy(request: NextRequest) {
 
   const { pathname } = request.nextUrl
 
-  if (!PUBLIC_PATHS.has(pathname) && !user) {
+  if (!PUBLIC_PATHS.has(pathname) && !pathname.startsWith('/invite/') && !user) {
     const loginUrl = new URL('/login', request.url)
     loginUrl.searchParams.set('next', pathname)
     return NextResponse.redirect(loginUrl)
