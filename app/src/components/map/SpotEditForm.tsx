@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react'
 import { updateSpotAction, removeMediaAction } from '@/app/actions/spots'
 import { createSupabaseBrowserClient } from '@/lib/supabase/browser'
-import type { SpotForModal, SpotMedia } from './SpotModal'
+import type { SpotForModal, SpotMedia } from './spotTypes'
 import styles from './spotCreationForm.module.css'
 
 interface Network {

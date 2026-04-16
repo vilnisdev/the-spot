@@ -65,11 +65,19 @@ function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
   })
 }
 
-function centroid(spots: Spot[]): [number, number] {
+function initialCenter(spots: Spot[]): [number, number] {
   if (spots.length === 0) return [51.505, -0.09]
-  const lat = spots.reduce((s, p) => s + p.lat, 0) / spots.length
-  const lng = spots.reduce((s, p) => s + p.lng, 0) / spots.length
-  return [lat, lng]
+  // Centroid of all pins
+  const cLat = spots.reduce((s, p) => s + p.lat, 0) / spots.length
+  const cLng = spots.reduce((s, p) => s + p.lng, 0) / spots.length
+  // Snap to the closest pin so at least one is visible
+  let best = spots[0]
+  let bestD = (best.lat - cLat) ** 2 + (best.lng - cLng) ** 2
+  for (let i = 1; i < spots.length; i++) {
+    const d = (spots[i].lat - cLat) ** 2 + (spots[i].lng - cLng) ** 2
+    if (d < bestD) { best = spots[i]; bestD = d }
+  }
+  return [best.lat, best.lng]
 }
 
 // Manages cursor and click events inside the Leaflet context
@@ -108,7 +116,7 @@ export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpo
   const dark = resolved === 'dark'
 
   const handleDrop = useCallback(onDrop, [onDrop])
-  const center = centroid(spots)
+  const center = initialCenter(spots)
 
   return (
     <MapContainer center={center} zoom={spots.length > 0 ? 10 : 3} style={{ width: '100%', height: '100%' }} zoomControl={false} attributionControl={false}>
