@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import { createInvitationAction } from '@/app/actions/invitations'
+import styles from './networkDetail.module.css'
 
 interface Props {
   networkId: string
@@ -21,16 +22,16 @@ export default function GenerateInviteForm({ networkId }: Props) {
     <div>
       <form action={action}>
         <input type="hidden" name="network_id" value={networkId} />
-        <button type="submit" disabled={pending}>
-          {pending ? 'Generating…' : 'Generate invite link'}
+        <button type="submit" disabled={pending} className={styles.generateBtn}>
+          {pending ? 'Generating\u2026' : 'Generate invite link'}
         </button>
       </form>
-      {state?.error && <p role="alert">{state.error}</p>}
+      {state?.error && <p role="alert" className={styles.formError}>{state.error}</p>}
       {inviteUrl && (
-        <p>
-          <span>Invite link: </span>
-          <code>{inviteUrl}</code>
-        </p>
+        <div>
+          <p className={styles.inviteUrlLabel}>Invite link</p>
+          <code className={styles.inviteUrl}>{inviteUrl}</code>
+        </div>
       )}
     </div>
   )
