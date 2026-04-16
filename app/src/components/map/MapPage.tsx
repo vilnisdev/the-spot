@@ -418,7 +418,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
 
   return (
     <div className={styles.layout}>
-      {panelFullyClosed && !exploreMode && (
+      {panelFullyClosed && !exploreMode && spotStage?.stage !== 'immersive' && (
         <button
           className={styles.menuBtn}
           onClick={() => { setPanelOpen(true); setPanelFullyClosed(false) }}
