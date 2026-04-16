@@ -39,8 +39,16 @@ export default function SpotCard({
   exiting,
 }: SpotCardProps) {
   const [imgError, setImgError] = useState(false)
+  const [loadTimeout, setLoadTimeout] = useState(false)
   const audioRef = useRef<HTMLAudioElement | null>(null)
   const [audioMuted, setAudioMuted] = useState(false)
+
+  // After 5s of loading, give up and show fallback
+  useEffect(() => {
+    if (!loading) { setLoadTimeout(false); return }
+    const t = setTimeout(() => setLoadTimeout(true), 5000)
+    return () => clearTimeout(t)
+  }, [loading])
 
   const media = useMemo(() => spot.media ?? [], [spot.media])
   const images = useMemo(() => media.filter((m) => m.type === 'image'), [media])
@@ -135,7 +143,8 @@ export default function SpotCard({
     onExpand()
   }
 
-  const showQuoteBlock = !hasImages || imgError
+  const showLoading = loading && !hasImages && !loadTimeout
+  const showQuoteBlock = (!hasImages || imgError) && !showLoading
 
   return (
     <div
@@ -151,7 +160,11 @@ export default function SpotCard({
         tabIndex={0}
         aria-label="Expand spot"
       >
-        {soundOnly ? (
+        {showLoading ? (
+          <div className={styles.loadingHero}>
+            <span className={styles.spinner} aria-label="Loading" />
+          </div>
+        ) : soundOnly ? (
           <div className={styles.soundOnlyHero}>
             <button
               type="button"

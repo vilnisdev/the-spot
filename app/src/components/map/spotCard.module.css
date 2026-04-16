@@ -57,6 +57,28 @@
   display: block;
 }
 
+.loadingHero {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--panel-bg);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--rule);
+  border-top-color: var(--sepia);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
 .quoteHero {
   position: absolute;
   inset: 0;
