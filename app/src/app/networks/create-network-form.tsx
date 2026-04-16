@@ -9,7 +9,6 @@ export default function CreateNetworkForm() {
 
   return (
     <form action={action}>
-      <label htmlFor="network-name" className={styles.fieldLabel}>Network name</label>
       <input
         id="network-name"
         name="name"
@@ -21,7 +20,7 @@ export default function CreateNetworkForm() {
       />
       {state?.error && <p role="alert" className={styles.formError}>{state.error}</p>}
       <button type="submit" disabled={pending} className={styles.createBtn} suppressHydrationWarning>
-        {pending ? 'Creating\u2026' : 'Create Network'}
+        {pending ? 'Creating\u2026' : 'Create New Network'}
       </button>
     </form>
   )

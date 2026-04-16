@@ -29,7 +29,6 @@ export default async function NetworksPage() {
       </header>
 
       <section className={styles.section}>
-        <p className={styles.sectionLabel}>Create a Network</p>
         <CreateNetworkForm />
       </section>
 
