@@ -34,13 +34,23 @@ export async function createUser(emailPrefix: string) {
 /** Sign in as a user; return a client scoped to their session */
 export async function signIn(email: string, password: string): Promise<SupabaseClient> {
   const base = anonClient()
-  const { data, error } = await base.auth.signInWithPassword({ email, password })
-  if (error) throw new Error(`signIn failed: ${error.message}`)
-
-  return createClient(URL, ANON_KEY, {
-    auth: { autoRefreshToken: false, persistSession: false },
-    global: { headers: { Authorization: `Bearer ${data.session!.access_token}` } },
-  })
+  const maxRetries = 3
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const { data, error } = await base.auth.signInWithPassword({ email, password })
+    if (!error) {
+      return createClient(URL, ANON_KEY, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: `Bearer ${data.session!.access_token}` } },
+      })
+    }
+    const isRateLimit = error.message.toLowerCase().includes('rate limit')
+    if (isRateLimit && attempt < maxRetries - 1) {
+      await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt)))
+    } else {
+      throw new Error(`signIn failed: ${error.message}`)
+    }
+  }
+  throw new Error('signIn failed: max retries exceeded')
 }
 
 /** Hard-delete a list of auth users (cascades to profiles) */
