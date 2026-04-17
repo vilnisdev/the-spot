@@ -31,11 +31,18 @@ export async function createUser(emailPrefix: string) {
   return { id: data.user!.id, email, password, username }
 }
 
+const MIN_SIGNIN_GAP_MS = 750
+let lastSignInAt = 0
+
 /** Sign in as a user; return a client scoped to their session */
 export async function signIn(email: string, password: string): Promise<SupabaseClient> {
   const base = anonClient()
-  const maxRetries = 3
+  const maxRetries = 6
   for (let attempt = 0; attempt < maxRetries; attempt++) {
+    const wait = Math.max(0, lastSignInAt + MIN_SIGNIN_GAP_MS - Date.now())
+    if (wait > 0) await new Promise(r => setTimeout(r, wait))
+    lastSignInAt = Date.now()
+
     const { data, error } = await base.auth.signInWithPassword({ email, password })
     if (!error) {
       return createClient(URL, ANON_KEY, {
@@ -45,7 +52,7 @@ export async function signIn(email: string, password: string): Promise<SupabaseC
     }
     const isRateLimit = error.message.toLowerCase().includes('rate limit')
     if (isRateLimit && attempt < maxRetries - 1) {
-      await new Promise(r => setTimeout(r, 2000 * Math.pow(2, attempt)))
+      await new Promise(r => setTimeout(r, 5000 * Math.pow(2, attempt)))
     } else {
       throw new Error(`signIn failed: ${error.message}`)
     }
