@@ -16,9 +16,10 @@ interface SpotCardProps {
   onOpen: (spot: MySpot) => void
   onEdit: (spot: MySpot) => void
   onDelete: (spot: MySpot) => void
+  onToggleFavorite: (spot: MySpot) => void
 }
 
-export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardProps) {
+export default function SpotCard({ spot, onOpen, onEdit, onDelete, onToggleFavorite }: SpotCardProps) {
   function handleCardClick(e: React.MouseEvent) {
     // Don't open modal if a control button was clicked
     const target = e.target as HTMLElement
@@ -39,6 +40,11 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
   function handleVisit(e: React.MouseEvent) {
     e.stopPropagation()
     window.location.href = `/?spot=${spot.id}`
+  }
+
+  function handleFavorite(e: React.MouseEvent) {
+    e.stopPropagation()
+    onToggleFavorite(spot)
   }
 
   const sub = [spot.date ? formatDate(spot.date) : null, spot.state]
@@ -83,6 +89,24 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete }: SpotCardPro
 
       {/* Controls */}
       <div className={styles.cardControls}>
+        <button
+          type="button"
+          className={`${styles.favoriteBtn} ${spot.isFavorite ? styles.favoriteBtnActive : ''}`}
+          onClick={handleFavorite}
+          aria-label={spot.isFavorite ? `Unfavorite ${spot.title}` : `Set ${spot.title} as favorite`}
+          aria-pressed={spot.isFavorite}
+          title={spot.isFavorite ? 'Unfavorite' : 'Set as favorite'}
+        >
+          {spot.isFavorite ? (
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+              <path d="M12 2l2.95 6.3 6.55.95-4.75 4.65 1.12 6.6L12 17.3l-5.87 3.2 1.12-6.6L2.5 9.25l6.55-.95z"/>
+            </svg>
+          ) : (
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true">
+              <path d="M12 2l2.95 6.3 6.55.95-4.75 4.65 1.12 6.6L12 17.3l-5.87 3.2 1.12-6.6L2.5 9.25l6.55-.95z"/>
+            </svg>
+          )}
+        </button>
         <button
           type="button"
           className={styles.visitBtn}

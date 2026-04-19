@@ -99,3 +99,29 @@ export async function updateUiSizeAction(
 
   return {}
 }
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/**
+ * updateFavoriteSpotAction — set (or clear) the current user's favorite Spot.
+ * Passing null clears the favorite. Overwrites any previous value.
+ */
+export async function updateFavoriteSpotAction(
+  spotId: string | null
+): Promise<{ error?: string }> {
+  if (spotId !== null && !UUID_RE.test(spotId)) return { error: 'Invalid spot id.' }
+
+  const supabase = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: 'Not authenticated.' }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ favorite_spot_id: spotId })
+    .eq('id', user.id)
+
+  if (error) return { error: error.message }
+  return {}
+}

@@ -145,7 +145,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
-  padding-right: 104px; /* leave room for 3 control buttons */
+  padding-right: 136px; /* leave room for 4 control buttons */
 }
 
 .cardTitle {
@@ -200,19 +200,22 @@
 @media (hover: hover) {
   .visitBtn,
   .editBtn,
-  .deleteBtn {
+  .deleteBtn,
+  .favoriteBtn:not(.favoriteBtnActive) {
     opacity: 0;
     transition: opacity 160ms;
     pointer-events: none;
   }
   .spotCard:hover .visitBtn,
   .spotCard:hover .editBtn,
-  .spotCard:hover .deleteBtn {
+  .spotCard:hover .deleteBtn,
+  .spotCard:hover .favoriteBtn {
     opacity: 1;
     pointer-events: auto;
   }
 }
 
+.favoriteBtn,
 .visitBtn,
 .editBtn,
 .deleteBtn {
@@ -230,6 +233,18 @@
   border-radius: 3px;
   transition: color 160ms, border-color 160ms;
   flex-shrink: 0;
+}
+
+.favoriteBtn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.favoriteBtnActive {
+  color: var(--accent);
+  border-color: var(--accent);
+  opacity: 1 !important;
+  pointer-events: auto !important;
 }
 
 .visitBtn:hover {
