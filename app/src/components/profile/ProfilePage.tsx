@@ -157,20 +157,6 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
         )}
       </section>
 
-      {/* My Networks */}
-      <section className={styles.section}>
-        <p className={styles.sectionLabel}>My Networks</p>
-        {networks.length === 0 ? (
-          <p className={styles.emptyState}>No networks yet.</p>
-        ) : (
-          <ul className={styles.networksList}>
-            {networks.map((n) => (
-              <li key={n.id} className={styles.networkItem}>{n.name}</li>
-            ))}
-          </ul>
-        )}
-      </section>
-
       {/* Spot modal */}
       <SpotModal
         spot={spotDetail}
