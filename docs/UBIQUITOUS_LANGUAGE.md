@@ -33,7 +33,11 @@
 | **Fly-to** | The animated map transition that moves the viewport to a Spot's location | Pan, jump, navigate, zoom-to |
 | **Drop** | The act of placing a Pin on the map to begin creating a new Spot | Place, add, create (in map context) |
 | **Drop mode** | The transient state the map enters after a Member chooses to add a Spot, during which the next map click becomes the Drop point | Add mode, placement mode |
-| **Explore mode** | A distraction-free map viewing state that hides all chrome (side panel trigger, search bar, Add Spot button), leaving only an `esc` exit chip. Pins remain clickable. Ephemeral — lost on reload. Distinct from Drop mode: Explore is for viewing, Drop is for creating | Focus mode, fullscreen mode, immersive mode |
+| **Explore mode** | A distraction-free map viewing state that hides all chrome (side panel trigger, search bar, Add Spot button), leaving only an `esc` exit chip. Pins remain clickable. Ephemeral — lost on reload. Distinct from Drop mode: Explore is for viewing, Drop is for creating | Focus mode, fullscreen mode |
+| **Spot Card** | Compact surface shown when a Pin is selected — hero image, title, author, date. First of the two-stage Spot UI; expands into Immersive view | Preview, teaser, popup |
+| **Immersive view** | Full-viewport media-first surface for a single Spot, opened from the Spot Card. Author-only inline editing lives here | Fullscreen Spot, detail view |
+| **Map Search** | Search input on the Interactive Map that queries Spot titles and Tags via the `search_spots` RPC and flies to / opens the chosen Spot | Omnisearch, finder |
+| **Pin hover tooltip** | Small floating label shown on Pin mouseover; displays the hero image (when present) plus the Spot title | Label, popover |
 
 ## Spot Details
 
@@ -43,6 +47,14 @@
 | **Date** | The calendar date the Spot was created, auto-filled and editable | Timestamp, created-at |
 | **Description** | Free-form text field on a Spot that captures the Member's field notes | Body, content, notes, caption |
 | **Tag** | A short label on a Spot used to surface related Spots | See core domain above |
+| **Hero image** | The first image in a Spot's Media list; used as the Spot Card thumbnail and in the Pin hover tooltip | Cover photo, thumbnail |
+
+## User Preferences
+
+| Term | Definition | Storage |
+|---|---|---|
+| **Theme preference** | A User's chosen colour theme: `light`, `dark`, or `system` (resolves to OS preference). Default is `dark` | `profiles.theme_preference` + `ts_theme` cookie |
+| **UI size** | A User's chosen root font-size scale: `regular` (100%), `large` (115%), or `xlarge` (130%). Affects every `rem`-based size | `profiles.ui_size` + `ts_ui_size` cookie |
 
 ## Relationships
 
@@ -81,3 +93,5 @@
 - **"Pin" vs "Spot"** — these are related but distinct. A **Spot** is the domain entity (the data, the story, the field note). A **Pin** is its map representation. You drop a **Pin** to create a **Spot**; you click a **Pin** to open a **Spot Modal**. Never use them interchangeably in code or copy.
 - **"Network"** — avoid "server" (Discord connotation), "group" (too generic), or "community" (implies public). **Network** is the canonical term: small, private, trust-based.
 - **"Scrapbook"** — used in product intent descriptions to convey the design philosophy (not addictive, precious, collected). It is not a domain term and should not appear in UI labels or code. It describes the *feeling*, not a feature.
+- **"Immersive view" vs "Explore mode"** — Immersive is a single Spot rendered full-viewport (media-first reading/editing). Explore is the map chrome-hidden viewing state. They are unrelated surfaces; never conflate. Explore has no Spot context; Immersive always has exactly one Spot.
+- **"Spot Card" vs "Spot Modal"** — Spot Card is the current canonical compact surface for a selected Pin. The `SpotModal` name survives in code (`src/components/map/SpotModal.tsx`) as a legacy wrapper and will be migrated; prefer "Spot Card" in UI copy and new code.
