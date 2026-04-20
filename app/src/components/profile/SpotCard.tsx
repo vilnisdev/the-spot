@@ -95,7 +95,7 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete, onToggleFavor
           onClick={handleFavorite}
           aria-label={spot.isFavorite ? `Unfavorite ${spot.title}` : `Set ${spot.title} as favorite`}
           aria-pressed={spot.isFavorite}
-          title={
+          data-tooltip={
             spot.isFavorite
               ? 'Unfavorite — map will no longer open here by default'
               : 'Favorite — this Spot will be the first to open on the map'
