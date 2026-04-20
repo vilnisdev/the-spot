@@ -95,7 +95,11 @@ export default function SpotCard({ spot, onOpen, onEdit, onDelete, onToggleFavor
           onClick={handleFavorite}
           aria-label={spot.isFavorite ? `Unfavorite ${spot.title}` : `Set ${spot.title} as favorite`}
           aria-pressed={spot.isFavorite}
-          title={spot.isFavorite ? 'Unfavorite' : 'Set as favorite'}
+          title={
+            spot.isFavorite
+              ? 'Unfavorite — map will no longer open here by default'
+              : 'Favorite — this Spot will be the first to open on the map'
+          }
         >
           {spot.isFavorite ? (
             <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
