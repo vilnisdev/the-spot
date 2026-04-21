@@ -1,8 +1,8 @@
-export type UiSizePreference = 'regular' | 'large' | 'xlarge'
+export type UiSizePreference = 'small' | 'medium' | 'xl' | 'xxl'
 
 export const UI_SIZE_COOKIE = 'ui-size'
 export const UI_SIZE_EVENT = 'uisizechange'
-export const UI_SIZE_PREFERENCES: readonly UiSizePreference[] = ['regular', 'large', 'xlarge']
+export const UI_SIZE_PREFERENCES: readonly UiSizePreference[] = ['small', 'medium', 'xl', 'xxl']
 
 export function isUiSizePreference(value: unknown): value is UiSizePreference {
   return typeof value === 'string' && (UI_SIZE_PREFERENCES as readonly string[]).includes(value)
