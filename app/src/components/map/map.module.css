@@ -325,11 +325,22 @@
   background: var(--tan-light);
 }
 
-@media (max-width: 580px) {
+/* Reserve right-edge space so the search bar never overlaps the Add Spot button.
+   Kicks in below the width where the centered bar + Add Spot button would collide,
+   including text-size "medium" and above which grows the button. */
+@media (max-width: 900px) {
   .searchBarWrap {
     left: 16px;
-    right: 148px;
+    right: 160px;
     transform: none;
     width: auto;
+    max-width: 340px;
+  }
+}
+
+@media (max-width: 580px) {
+  .searchBarWrap {
+    right: 148px;
+    max-width: none;
   }
 }
