@@ -234,7 +234,10 @@
   z-index: 500;
   display: flex;
   flex-direction: column;
-  width: min(340px, calc(100vw - 48px));
+  /* Reserve ~180px on each side so the centered bar shrinks (rather than shifting)
+     when it would otherwise collide with the right-side Add Spot button,
+     including at larger text sizes (Medium / XL / XXL) which grow the button. */
+  width: min(340px, calc(100vw - 360px));
 }
 
 .searchBar {
@@ -325,22 +328,11 @@
   background: var(--tan-light);
 }
 
-/* Reserve right-edge space so the search bar never overlaps the Add Spot button.
-   Kicks in below the width where the centered bar + Add Spot button would collide,
-   including text-size "medium" and above which grows the button. */
-@media (max-width: 900px) {
-  .searchBarWrap {
-    left: 16px;
-    right: 160px;
-    transform: none;
-    width: auto;
-    max-width: 340px;
-  }
-}
-
 @media (max-width: 580px) {
   .searchBarWrap {
+    left: 16px;
     right: 148px;
-    max-width: none;
+    transform: none;
+    width: auto;
   }
 }
