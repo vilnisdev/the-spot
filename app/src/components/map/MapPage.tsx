@@ -53,11 +53,18 @@ interface LatLng {
   lng: number
 }
 
+interface FavoriteSpot {
+  id: string
+  lat: number
+  lng: number
+}
+
 interface MapPageProps {
   spots: Spot[]
   networks: Network[]
   userId: string | null
   initialSpotId: string | null
+  favoriteSpot: FavoriteSpot | null
 }
 
 type SpotStage =
@@ -92,7 +99,7 @@ function mapSpotToForModal(spot: Spot): SpotForModal {
   }
 }
 
-export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId, favoriteSpot }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelFullyClosed, setPanelFullyClosed] = useState(true)
@@ -462,6 +469,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           onDrop={handleDrop}
           onSpotClick={handleSpotClick}
           onMapReady={handleMapReady}
+          favoriteSpot={initialSpotId ? null : favoriteSpot}
         />
         {!exploreMode && <MapSearchBar onSelectSpot={handleSearchSelect} />}
       </div>

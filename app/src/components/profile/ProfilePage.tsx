@@ -11,6 +11,7 @@ import {
   deleteSpotAction,
   type MySpot,
 } from '@/app/actions/spots'
+import { updateFavoriteSpotAction } from '@/app/actions/profile'
 import SpotCard from './SpotCard'
 import styles from './profile.module.css'
 
@@ -27,6 +28,14 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ username, spots: initialSpots, networks }: ProfilePageProps) {
   const [spots, setSpots] = useState<MySpot[]>(initialSpots)
+
+  async function handleToggleFavorite(spot: MySpot) {
+    const next = spot.isFavorite ? null : spot.id
+    const snapshot = spots
+    setSpots((list) => list.map((s) => ({ ...s, isFavorite: s.id === next })))
+    const { error } = await updateFavoriteSpotAction(next)
+    if (error) setSpots(snapshot)
+  }
   const [spotDetail, setSpotDetail] = useState<SpotForModal | null>(null)
   const [isAuthor, setIsAuthor] = useState(false)
   const [editingSpot, setEditingSpot] = useState<SpotForModal | null>(null)
@@ -141,21 +150,8 @@ export default function ProfilePage({ username, spots: initialSpots, networks }:
                 onOpen={handleOpen}
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onToggleFavorite={handleToggleFavorite}
               />
-            ))}
-          </ul>
-        )}
-      </section>
-
-      {/* My Networks */}
-      <section className={styles.section}>
-        <p className={styles.sectionLabel}>My Networks</p>
-        {networks.length === 0 ? (
-          <p className={styles.emptyState}>No networks yet.</p>
-        ) : (
-          <ul className={styles.networksList}>
-            {networks.map((n) => (
-              <li key={n.id} className={styles.networkItem}>{n.name}</li>
             ))}
           </ul>
         )}

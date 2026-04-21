@@ -31,6 +31,7 @@ interface MapViewProps {
   onDrop: (latlng: LatLng) => void
   onSpotClick: (spot: Spot) => void
   onMapReady?: (map: L.Map) => void
+  favoriteSpot?: { id: string; lat: number; lng: number } | null
 }
 
 const OSM_TILE = 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png'
@@ -40,7 +41,10 @@ const STADIA_DARK_TILE = 'https://tiles.stadiamaps.com/tiles/alidade_smooth_dark
 const STADIA_DARK_ATTRIBUTION =
   '&copy; <a href="https://stadiamaps.com/">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
-function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
+function makePinIcon(
+  variant: 'saved' | 'active' | 'provisional',
+  favorite = false,
+): L.DivIcon {
   const fill =
     variant === 'active' ? 'var(--accent)' :
     variant === 'provisional' ? 'none' :
@@ -50,10 +54,16 @@ function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
   const dotFill = variant === 'provisional' ? 'none' : 'white'
   const dotOpacity = variant === 'provisional' ? '0' : '0.6'
 
+  const favoriteOverlay = favorite
+    ? `<path d="M19 1.2l1.3 2.6 2.9.4-2.1 2 .5 2.9L19 7.7l-2.6 1.4.5-2.9-2.1-2 2.9-.4z"
+         fill="var(--accent)" stroke="white" stroke-width="0.8" stroke-linejoin="round"/>`
+    : ''
+
   const svg = `<svg viewBox="0 0 24 32" width="24" height="32" xmlns="http://www.w3.org/2000/svg">
     <path d="M12 0C6.477 0 2 4.477 2 10c0 7 10 22 10 22S22 17 22 10C22 4.477 17.523 0 12 0z"
       fill="${fill}" stroke="${stroke}" stroke-width="1.5" stroke-dasharray="${strokeDasharray}"/>
     <circle cx="12" cy="10" r="4" fill="${dotFill}" fill-opacity="${dotOpacity}"/>
+    ${favoriteOverlay}
   </svg>`
 
   return L.divIcon({
@@ -65,7 +75,11 @@ function makePinIcon(variant: 'saved' | 'active' | 'provisional'): L.DivIcon {
   })
 }
 
-function initialCenter(spots: Spot[]): [number, number] {
+function initialCenter(
+  spots: Spot[],
+  favoriteSpot: { lat: number; lng: number } | null | undefined,
+): [number, number] {
+  if (favoriteSpot) return [favoriteSpot.lat, favoriteSpot.lng]
   if (spots.length === 0) return [51.505, -0.09]
   // Centroid of all pins
   const cLat = spots.reduce((s, p) => s + p.lat, 0) / spots.length
@@ -111,15 +125,16 @@ function DropHandler({
   return null
 }
 
-export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpotClick, onMapReady }: MapViewProps) {
+export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpotClick, onMapReady, favoriteSpot }: MapViewProps) {
   const { resolved } = useTheme()
   const dark = resolved === 'dark'
 
   const handleDrop = useCallback(onDrop, [onDrop])
-  const center = initialCenter(spots)
+  const center = initialCenter(spots, favoriteSpot ?? null)
+  const initialZoom = favoriteSpot ? 15 : spots.length > 0 ? 10 : 3
 
   return (
-    <MapContainer center={center} zoom={spots.length > 0 ? 10 : 3} style={{ width: '100%', height: '100%' }} zoomControl={false} attributionControl={false}>
+    <MapContainer center={center} zoom={initialZoom} style={{ width: '100%', height: '100%' }} zoomControl={false} attributionControl={false}>
       <TileLayer
         key={dark ? 'dark' : 'light'}
         url={dark ? STADIA_DARK_TILE : OSM_TILE}
@@ -130,7 +145,7 @@ export default function MapView({ spots, dropMode, provisionalPin, onDrop, onSpo
         <Marker
           key={spot.id}
           position={[spot.lat, spot.lng]}
-          icon={makePinIcon('saved')}
+          icon={makePinIcon('saved', favoriteSpot?.id === spot.id)}
           eventHandlers={{ click: () => onSpotClick(spot) }}
         >
           <Tooltip direction="top" offset={[0, -34]} opacity={1} className="the-spot-tooltip">

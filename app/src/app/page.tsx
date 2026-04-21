@@ -17,7 +17,7 @@ export default async function Home({ searchParams }: HomeProps) {
 
   const { spot } = await searchParams
 
-  const [spots, { data: networks }] = await Promise.all([
+  const [mapResult, { data: networks }] = await Promise.all([
     getMapSpotsAction(),
     supabase.from('networks').select('id, name').order('name'),
   ])
@@ -25,10 +25,11 @@ export default async function Home({ searchParams }: HomeProps) {
   return (
     <main style={{ height: '100vh', overflow: 'hidden' }}>
       <MapPage
-        spots={spots ?? []}
+        spots={mapResult.spots}
         networks={networks ?? []}
         userId={user.id}
         initialSpotId={spot ?? null}
+        favoriteSpot={mapResult.favoriteSpot}
       />
     </main>
   )
