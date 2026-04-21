@@ -103,6 +103,7 @@
   color: var(--ink);
   letter-spacing: 0.01em;
   line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .editIconBtn {
@@ -256,6 +257,7 @@
   color: var(--ink);
   line-height: 1.7;
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 /* ── Tags ── */
@@ -514,6 +516,7 @@
     padding-right: 0;
     border-bottom: 1px solid var(--rule);
     padding-bottom: 16px;
+    min-width: 0;
   }
 
   .galleryStrip {
@@ -523,5 +526,6 @@
   .metaCol {
     padding-left: 0;
     padding-right: 0;
+    min-width: 0;
   }
 }
