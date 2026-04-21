@@ -429,7 +429,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         }}
       >
         <div className={styles.panelHeader}>
-          <span className={styles.panelTitle}>The Spot</span>
+          <span className={styles.panelTitle}>Coppice</span>
           <button
             className={styles.menuBtn}
             onClick={() => setPanelOpen(false)}

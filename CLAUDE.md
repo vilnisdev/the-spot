@@ -1,4 +1,4 @@
-# CLAUDE.md — The Spot
+# CLAUDE.md — Coppice
 
 Behavioral guidelines for this codebase. Read before writing any code.
 

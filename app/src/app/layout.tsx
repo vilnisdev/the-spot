@@ -5,7 +5,7 @@ import { isUiSizePreference, UI_SIZE_COOKIE, type UiSizePreference } from '@/lib
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'The Spot',
+  title: 'Coppice',
   description: 'Your field journal for hidden places',
 }
 
