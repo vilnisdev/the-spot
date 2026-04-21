@@ -45,14 +45,14 @@ export async function registerAction(
   // Email confirmation disabled — session is available immediately. Join now.
   if (inviteToken && data.session) {
     const { data: networkId } = await supabase.rpc('join_by_token', { p_token: inviteToken })
-    if (networkId) redirect(`/networks/${networkId}`)
+    if (networkId) redirect(`/circles/${networkId}`)
   }
 
   // No session yet (email confirmation required). If there's an invite token,
   // tell the user to confirm their email and return to the invite link after.
   if (inviteToken && !data.session) {
     return {
-      message: `Check your email for a confirmation link. After confirming, return to ${siteUrl}/invite/${inviteToken} to join the network.`,
+      message: `Check your email for a confirmation link. After confirming, return to ${siteUrl}/invite/${inviteToken} to join the circle.`,
     }
   }
 

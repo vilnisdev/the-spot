@@ -15,7 +15,7 @@ export default function JoinNetworkForm({ token }: Props) {
       <input type="hidden" name="token" value={token} />
       {state?.error && <p role="alert">{state.error}</p>}
       <button type="submit" disabled={pending}>
-        {pending ? 'Joining…' : 'Join Network'}
+        {pending ? 'Joining…' : 'Join Circle'}
       </button>
     </form>
   )

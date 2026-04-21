@@ -414,7 +414,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         <button
           className={styles.menuBtn}
           onClick={() => { setPanelOpen(true); setPanelFullyClosed(false) }}
-          aria-label="Open network panel"
+          aria-label="Open circle panel"
         >
           ☰
         </button>
@@ -433,13 +433,13 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           <button
             className={styles.menuBtn}
             onClick={() => setPanelOpen(false)}
-            aria-label="Close network panel"
+            aria-label="Close circle panel"
           >
             ☰
           </button>
         </div>
         <div className={styles.panelSection}>
-          <p className={styles.panelLabel}>Networks</p>
+          <p className={styles.panelLabel}>Circles</p>
           <NetworkFilter
             networks={networks}
             selected={selectedNetworkId}
@@ -456,7 +456,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
             Explore
           </button>
           <a href="/profile" className={styles.panelNavLink}>Profile</a>
-          <a href="/networks" className={styles.panelNavLink}>Networks</a>
+          <a href="/circles" className={styles.panelNavLink}>Circles</a>
           <a href="/settings" className={styles.panelNavLink}>Settings</a>
         </div>
       </aside>

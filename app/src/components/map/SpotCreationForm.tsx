@@ -262,7 +262,7 @@ export default function SpotCreationForm({
               </div>
             </div>
             {networkError && (
-              <p className={styles.fieldError}>Select at least one network.</p>
+              <p className={styles.fieldError}>Select at least one circle.</p>
             )}
 
             {/* Auto-fill: date */}

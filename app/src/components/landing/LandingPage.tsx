@@ -14,8 +14,8 @@ const features = [
     body: 'Add photographs, audio, and notes. Each Spot becomes a living record of a place.',
   },
   {
-    title: 'Share with your Network',
-    body: 'Spots stay private to your Network. Only the people you trust see what you find.',
+    title: 'Share with your Circle',
+    body: 'Spots stay private to your Circle. Only the people you trust see what you find.',
   },
 ]
 

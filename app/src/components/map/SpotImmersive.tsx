@@ -695,7 +695,7 @@ function EditContent({ spot, networks, onSave, onCancel, onDelete }: EditContent
       </label>
 
       <div className={styles.editLabel}>
-        <span>Networks</span>
+        <span>Circles</span>
         <div className={styles.networkPills}>
           {networks.map((n) => (
             <button
@@ -709,7 +709,7 @@ function EditContent({ spot, networks, onSave, onCancel, onDelete }: EditContent
           ))}
         </div>
       </div>
-      {networkError && <p className={styles.fieldError}>Select at least one network.</p>}
+      {networkError && <p className={styles.fieldError}>Select at least one circle.</p>}
 
       {error && <p className={styles.serverError} role="alert">{error}</p>}
 

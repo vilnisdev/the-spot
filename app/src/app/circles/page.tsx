@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase/server'
 import PageNav from '@/components/shared/PageNav'
 import CreateNetworkForm from './create-network-form'
-import styles from './networks.module.css'
+import styles from './circles.module.css'
 
 export default async function NetworksPage() {
   const supabase = await createSupabaseServerClient()
@@ -22,9 +22,9 @@ export default async function NetworksPage() {
       <PageNav />
 
       <header className={styles.header}>
-        <h1 className={styles.title}>Networks</h1>
+        <h1 className={styles.title}>Circles</h1>
         <p className={styles.subtitle}>
-          {count === 0 ? 'No networks yet' : `${count} network${count === 1 ? '' : 's'}`}
+          {count === 0 ? 'No circles yet' : `${count} circle${count === 1 ? '' : 's'}`}
         </p>
       </header>
 
@@ -33,18 +33,18 @@ export default async function NetworksPage() {
       </section>
 
       <section className={styles.section}>
-        <p className={styles.sectionLabel}>Your Networks</p>
+        <p className={styles.sectionLabel}>Your Circles</p>
         {networks && networks.length > 0 ? (
           <ul className={styles.networkList}>
             {networks.map((n) => (
               <li key={n.id} className={styles.networkItem}>
-                <a href={`/networks/${n.id}`} className={styles.networkLink}>{n.name}</a>
+                <a href={`/circles/${n.id}`} className={styles.networkLink}>{n.name}</a>
                 {n.owner_id === user!.id && <span className={styles.ownerBadge}>owner</span>}
               </li>
             ))}
           </ul>
         ) : (
-          <p className={styles.emptyState}>No networks yet. Create one above.</p>
+          <p className={styles.emptyState}>No circles yet. Create one above.</p>
         )}
       </section>
     </div>
