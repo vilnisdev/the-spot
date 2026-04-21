@@ -328,11 +328,11 @@
   background: var(--tan-light);
 }
 
-@media (max-width: 580px) {
+/* At true mobile widths the centered-shrink math would leave the bar
+   too small to type in, so stack it above the Add Spot button instead. */
+@media (max-width: 640px) {
   .searchBarWrap {
-    left: 16px;
-    right: 148px;
-    transform: none;
-    width: auto;
+    bottom: 80px;
+    width: min(340px, calc(100vw - 32px));
   }
 }
