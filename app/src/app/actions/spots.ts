@@ -99,7 +99,7 @@ export async function createSpotAction(formData: FormData): Promise<SpotActionRe
   const description = (formData.get('description') as string | null)?.trim() || null
   const networkIds = formData.getAll('networks') as string[]
 
-  if (networkIds.length === 0) return { error: 'At least one network is required.' }
+  if (networkIds.length === 0) return { error: 'At least one circle is required.' }
 
   const tagNames = extractTags(description)
   const state = await reverseGeocode(lat, lng)
@@ -269,7 +269,7 @@ export async function updateSpotAction(
   const description = (formData.get('description') as string | null)?.trim() || null
   const date = (formData.get('date') as string | null) || new Date().toISOString().split('T')[0]
   const networkIds = formData.getAll('networks') as string[]
-  if (networkIds.length === 0) return { error: 'At least one network is required.' }
+  if (networkIds.length === 0) return { error: 'At least one circle is required.' }
 
   const tagNames = extractTags(description)
 

@@ -8,7 +8,7 @@ import styles from './pageNav.module.css'
 const LINKS = [
   { href: '/', label: 'Map' },
   { href: '/profile', label: 'Profile' },
-  { href: '/networks', label: 'Networks' },
+  { href: '/circles', label: 'Circles' },
   { href: '/settings', label: 'Settings' },
 ]
 

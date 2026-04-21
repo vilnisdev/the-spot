@@ -333,7 +333,7 @@ export default function SpotEditForm({ spot, networks, onSave, onCancel, onDelet
               </div>
             </div>
             {networkError && (
-              <p className={styles.fieldError}>Select at least one network.</p>
+              <p className={styles.fieldError}>Select at least one circle.</p>
             )}
 
             {/* Date */}

@@ -21,7 +21,7 @@ export async function createNetworkAction(
   const { data: networkId, error } = await supabase.rpc('create_network', { p_name: name })
   if (error) return { error: error.message }
 
-  redirect(`/networks/${networkId}`)
+  redirect(`/circles/${networkId}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -34,7 +34,7 @@ export async function renameNetworkAction(formData: FormData): Promise<void> {
 
   const supabase = await createSupabaseServerClient()
   await supabase.from('networks').update({ name }).eq('id', networkId)
-  revalidatePath(`/networks/${networkId}`)
+  revalidatePath(`/circles/${networkId}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -46,7 +46,7 @@ export async function deleteNetworkAction(formData: FormData): Promise<void> {
 
   const supabase = await createSupabaseServerClient()
   await supabase.from('networks').delete().eq('id', networkId)
-  redirect('/networks')
+  redirect('/circles')
 }
 
 // ---------------------------------------------------------------------------
@@ -68,7 +68,7 @@ export async function leaveNetworkAction(formData: FormData): Promise<void> {
     .eq('network_id', networkId)
     .eq('user_id', user.id)
 
-  redirect('/networks')
+  redirect('/circles')
 }
 
 // ---------------------------------------------------------------------------
@@ -86,5 +86,5 @@ export async function removeMemberAction(formData: FormData): Promise<void> {
     .eq('network_id', networkId)
     .eq('user_id', targetUserId)
 
-  revalidatePath(`/networks/${networkId}`)
+  revalidatePath(`/circles/${networkId}`)
 }

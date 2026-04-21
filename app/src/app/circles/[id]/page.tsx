@@ -132,12 +132,12 @@ export default async function NetworkDetailPage({ params }: Props) {
         {isOwner ? (
           <form action={deleteNetworkAction}>
             <input type="hidden" name="network_id" value={id} />
-            <button type="submit" className={styles.dangerBtn}>Delete Network</button>
+            <button type="submit" className={styles.dangerBtn}>Delete Circle</button>
           </form>
         ) : (
           <form action={leaveNetworkAction}>
             <input type="hidden" name="network_id" value={id} />
-            <button type="submit" className={styles.leaveBtn}>Leave Network</button>
+            <button type="submit" className={styles.leaveBtn}>Leave Circle</button>
           </form>
         )}
       </section>

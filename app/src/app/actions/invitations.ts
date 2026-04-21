@@ -15,7 +15,7 @@ export async function createInvitationAction(
   formData: FormData
 ): Promise<InvitationActionState> {
   const networkId = formData.get('network_id') as string
-  if (!networkId) return { error: 'Network ID is required.' }
+  if (!networkId) return { error: 'Circle ID is required.' }
 
   const supabase = await createSupabaseServerClient()
   const {
@@ -47,7 +47,7 @@ export async function revokeInvitationAction(formData: FormData): Promise<void> 
     .update({ revoked_at: new Date().toISOString() })
     .eq('id', invitationId)
 
-  revalidatePath(`/networks/${networkId}`)
+  revalidatePath(`/circles/${networkId}`)
 }
 
 // ---------------------------------------------------------------------------
@@ -64,5 +64,5 @@ export async function joinByTokenAction(
   const { data: networkId, error } = await supabase.rpc('join_by_token', { p_token: token })
 
   if (error) return { error: error.message }
-  redirect(`/networks/${networkId}`)
+  redirect(`/circles/${networkId}`)
 }

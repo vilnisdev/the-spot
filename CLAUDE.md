@@ -108,8 +108,8 @@ Critical distinctions:
 |---|---|---|
 | **Spot** | location, place, post, POI | Spot is the domain entity |
 | **Pin** | marker, dot, pushpin | Pin is the map representation of a Spot |
-| **Network** | group, community, server, team | Network is the canonical trust boundary |
-| **Member** | user (in Network context) | User = auth identity; Member = User within a Network |
+| **Circle** | group, community, server, team, network | Circle is the canonical trust boundary in UI copy (DB/code still uses `network` — tracked tech debt) |
+| **Member** | user (in Circle context) | User = auth identity; Member = User within a Circle |
 | **Author** | creator, owner, poster | Author = Member who created the Spot |
 | **Drop** | place, add, create (in map context) | Drop = the act of placing a Pin to start a Spot |
 | **Explore mode** | fullscreen, focus mode, immersive | Explore = distraction-free viewing, hides chrome |
