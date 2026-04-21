@@ -1,4 +1,4 @@
-# Ubiquitous Language — The Spot
+# Ubiquitous Language — Coppice
 
 ## Core Domain
 
@@ -88,7 +88,7 @@
 
 ## Flagged Ambiguities
 
-- **"Hub"** — used in the product description ("a hub for hikers") but should not appear in code or UI copy. The canonical term is the app name: **The Spot**. "Hub" is marketing language.
+- **"Hub"** — used in the product description ("a hub for hikers") but should not appear in code or UI copy. The canonical term is the app name: **Coppice**. "Hub" is marketing language.
 - **"User" vs "Member"** — a **User** is the authentication identity (exists in the auth system). A **Member** is a **User** in the context of a **Network**. In UI copy, prefer "Member" when referring to someone within a Network context; prefer "User" only for auth/profile contexts (login, profile settings).
 - **"Pin" vs "Spot"** — these are related but distinct. A **Spot** is the domain entity (the data, the story, the field note). A **Pin** is its map representation. You drop a **Pin** to create a **Spot**; you click a **Pin** to open a **Spot Modal**. Never use them interchangeably in code or copy.
 - **"Network"** — avoid "server" (Discord connotation), "group" (too generic), or "community" (implies public). **Network** is the canonical term: small, private, trust-based.

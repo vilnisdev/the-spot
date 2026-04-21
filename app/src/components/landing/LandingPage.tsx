@@ -25,7 +25,7 @@ export default function LandingPage() {
   return (
     <div className={styles.page}>
       <header className={styles.nav}>
-        <span className={styles.wordmark}>The Spot</span>
+        <span className={styles.wordmark}>Coppice</span>
       </header>
 
       <section className={styles.hero}>
@@ -55,7 +55,7 @@ export default function LandingPage() {
             {screenshotExists ? (
               <Image
                 src="/landing-showcase.png"
-                alt="The Spot — map view with an open spot card"
+                alt="Coppice — map view with an open spot card"
                 fill
                 className={styles.screenshot}
                 priority={false}

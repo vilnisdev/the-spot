@@ -1,4 +1,4 @@
-# The Spot — Design Document
+# Coppice — Design Document
 
 **Design direction:** Editorial Field Journal — print culture meets trail guide.
 **Stack:** Next.js 16 · React 19 · React-Leaflet · Supabase · CSS Modules
@@ -104,7 +104,7 @@ Root font-size scales with `html[data-size]` so every `rem`-based size follows a
 
 | Element | Font | Size | Weight | Style | Letter-spacing |
 |---|---|---|---|---|---|
-| Panel title ("The Spot") | `--font-serif` | `1.25rem` | `600` | normal | `0.02em` |
+| Panel title ("Coppice") | `--font-serif` | `1.25rem` | `600` | normal | `0.02em` |
 | Section label (e.g. "NETWORKS") | `--font-body` | `0.7rem` | `600` | normal | `0.12em` uppercase |
 | Network filter button | `--font-body` | `0.875rem` | `300` | normal | — |
 | Spot title (Card / Immersive) | `--font-serif` | `1.5rem` | `700` | normal | `0.01em` |

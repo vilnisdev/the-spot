@@ -1,4 +1,4 @@
-# The Spot — Architecture
+# Coppice — Architecture
 
 Living reference for how the app is put together. Paired with `docs/design.md` (visual system) and `docs/UBIQUITOUS_LANGUAGE.md` (domain terms). Source of truth is the `dev` branch; update this file when architecture shifts.
 
