@@ -7,6 +7,9 @@ import './globals.css'
 export const metadata: Metadata = {
   title: 'Coppice',
   description: 'Your field journal for hidden places',
+  icons: {
+    icon: '/coppice-logo.png',
+  },
 }
 
 export default async function RootLayout({
