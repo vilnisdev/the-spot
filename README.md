@@ -107,3 +107,11 @@ app/
 - **Member** — a user within a Network context. **User** in auth context.
 
 Full glossary: `docs/UBIQUITOUS_LANGUAGE.md`
+
+## 💰 Bounty Contribution
+
+- **Task:** Deploy Coppice to production (Vercel + Supabase + Resend)
+- **Reward:** $10
+- **Source:** GitHub-Paid
+- **Date:** 2026-04-27
+
