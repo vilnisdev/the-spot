@@ -1,5 +1,3 @@
-import { existsSync } from 'fs'
-import { join } from 'path'
 import Image from 'next/image'
 import LandingAuthForm from './LandingAuthForm'
 import styles from './landingPage.module.css'
@@ -20,8 +18,6 @@ const features = [
 ]
 
 export default function LandingPage() {
-  const screenshotExists = existsSync(join(process.cwd(), 'public', 'landing-showcase.png'))
-
   return (
     <div className={styles.page}>
       <header className={styles.nav}>
@@ -52,21 +48,14 @@ export default function LandingPage() {
       <section className={styles.showcase}>
         <div className={styles.showcaseInner}>
           <div className={styles.screenshotWrap}>
-            {screenshotExists ? (
-              <Image
-                src="/landing-showcase.png"
-                alt="Coppice — map view with an open spot card"
-                fill
-                className={styles.screenshot}
-                priority={false}
-              />
-            ) : (
-              <div className={styles.screenshotPlaceholder} aria-hidden="true" />
-            )}
+            <Image
+              src="/coppice-landing-page-teaser.png"
+              alt="Coppice — map view with an open spot card"
+              fill
+              className={styles.screenshot}
+              priority={false}
+            />
           </div>
-          <p className={styles.showcaseCaption}>
-            Every pin is a story. Every network is a circle of trust.
-          </p>
         </div>
       </section>
     </div>
