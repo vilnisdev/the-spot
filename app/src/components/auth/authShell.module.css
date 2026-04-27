@@ -1,0 +1,44 @@
+.page {
+  min-height: 100dvh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-body);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1.25rem;
+  box-sizing: border-box;
+}
+
+.wordmark {
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  text-decoration: none;
+  margin-bottom: 3rem;
+}
+
+.wordmark:hover {
+  opacity: 0.7;
+}
+
+.cardWrap {
+  width: 100%;
+  max-width: 22rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1.25rem;
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 1.75rem 1rem;
+  }
+
+  .wordmark {
+    margin-bottom: 2rem;
+  }
+}

@@ -2,6 +2,7 @@
 
 import { useActionState } from 'react'
 import { registerAction } from '@/app/actions/auth'
+import styles from '@/components/auth/authForm.module.css'
 
 interface Props {
   inviteToken?: string
@@ -11,34 +12,49 @@ export default function RegisterForm({ inviteToken }: Props) {
   const [state, action, pending] = useActionState(registerAction, undefined)
 
   return (
-    <form action={action}>
+    <form action={action} className={styles.form}>
       {inviteToken && <input type="hidden" name="invite_token" value={inviteToken} />}
-      <div>
-        <label htmlFor="username">Username</label>
-        <input id="username" name="username" type="text" required autoComplete="username" suppressHydrationWarning />
-      </div>
 
-      <div>
-        <label htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" required autoComplete="email" suppressHydrationWarning />
-      </div>
-
-      <div>
-        <label htmlFor="password">Password</label>
+      <label className={styles.label}>
+        Username
         <input
-          id="password"
+          name="username"
+          type="text"
+          required
+          autoComplete="username"
+          className={styles.input}
+          suppressHydrationWarning
+        />
+      </label>
+
+      <label className={styles.label}>
+        Email
+        <input
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className={styles.input}
+          suppressHydrationWarning
+        />
+      </label>
+
+      <label className={styles.label}>
+        Password
+        <input
           name="password"
           type="password"
           required
           autoComplete="new-password"
+          className={styles.input}
           suppressHydrationWarning
         />
-      </div>
+      </label>
 
-      {state?.error && <p role="alert">{state.error}</p>}
-      {state?.message && <p>{state.message}</p>}
+      {state?.error && <p className={styles.error} role="alert">{state.error}</p>}
+      {state?.message && <p className={styles.message}>{state.message}</p>}
 
-      <button type="submit" disabled={pending} suppressHydrationWarning>
+      <button type="submit" disabled={pending} className={styles.submit} suppressHydrationWarning>
         {pending ? 'Creating account…' : 'Create account'}
       </button>
     </form>

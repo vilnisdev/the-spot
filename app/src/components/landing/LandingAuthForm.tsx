@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { registerAction } from '@/app/actions/auth'
 import { loginAction } from '@/app/actions/auth'
 import styles from './landingPage.module.css'
+import formStyles from '@/components/auth/authForm.module.css'
 
 type Tab = 'signup' | 'login'
 
@@ -14,7 +15,7 @@ export default function LandingAuthForm() {
   const [loginState, loginAction_, loginPending] = useActionState(loginAction, undefined)
 
   return (
-    <div className={styles.authCard}>
+    <div className={formStyles.card}>
       <div className={styles.tabs}>
         <button
           className={tab === 'signup' ? styles.tabActive : styles.tab}
@@ -33,74 +34,74 @@ export default function LandingAuthForm() {
       </div>
 
       {tab === 'signup' && (
-        <form action={signupAction} className={styles.form}>
-          <label className={styles.label}>
+        <form action={signupAction} className={formStyles.form}>
+          <label className={formStyles.label}>
             Username
             <input
               name="username"
               type="text"
               required
               autoComplete="username"
-              className={styles.input}
+              className={formStyles.input}
               suppressHydrationWarning
             />
           </label>
-          <label className={styles.label}>
+          <label className={formStyles.label}>
             Email
             <input
               name="email"
               type="email"
               required
               autoComplete="email"
-              className={styles.input}
+              className={formStyles.input}
               suppressHydrationWarning
             />
           </label>
-          <label className={styles.label}>
+          <label className={formStyles.label}>
             Password
             <input
               name="password"
               type="password"
               required
               autoComplete="new-password"
-              className={styles.input}
+              className={formStyles.input}
               suppressHydrationWarning
             />
           </label>
-          {signupState?.error && <p className={styles.error} role="alert">{signupState.error}</p>}
-          {signupState?.message && <p className={styles.message}>{signupState.message}</p>}
-          <button type="submit" disabled={signupPending} className={styles.submit} suppressHydrationWarning>
+          {signupState?.error && <p className={formStyles.error} role="alert">{signupState.error}</p>}
+          {signupState?.message && <p className={formStyles.message}>{signupState.message}</p>}
+          <button type="submit" disabled={signupPending} className={formStyles.submit} suppressHydrationWarning>
             {signupPending ? 'Creating account…' : 'Create account'}
           </button>
         </form>
       )}
 
       {tab === 'login' && (
-        <form action={loginAction_} className={styles.form}>
-          <label className={styles.label}>
+        <form action={loginAction_} className={formStyles.form}>
+          <label className={formStyles.label}>
             Email
             <input
               name="email"
               type="email"
               required
               autoComplete="email"
-              className={styles.input}
+              className={formStyles.input}
               suppressHydrationWarning
             />
           </label>
-          <label className={styles.label}>
+          <label className={formStyles.label}>
             Password
             <input
               name="password"
               type="password"
               required
               autoComplete="current-password"
-              className={styles.input}
+              className={formStyles.input}
               suppressHydrationWarning
             />
           </label>
-          {loginState?.error && <p className={styles.error} role="alert">{loginState.error}</p>}
-          <button type="submit" disabled={loginPending} className={styles.submit} suppressHydrationWarning>
+          {loginState?.error && <p className={formStyles.error} role="alert">{loginState.error}</p>}
+          <button type="submit" disabled={loginPending} className={formStyles.submit} suppressHydrationWarning>
             {loginPending ? 'Logging in…' : 'Log in'}
           </button>
           <Link href="/forgot-password" className={styles.forgot}>Forgot password?</Link>
