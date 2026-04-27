@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: 'Coppice',
   description: 'Your field journal for hidden places',
   icons: {
-    icon: '/coppice-logo.png',
+    icon: '/coppice-logo-v2.png',
   },
 }
 
