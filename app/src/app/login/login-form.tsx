@@ -1,7 +1,10 @@
 'use client'
 
 import { useActionState } from 'react'
+import Link from 'next/link'
 import { loginAction } from '@/app/actions/auth'
+import styles from '@/components/auth/authForm.module.css'
+import localStyles from './login-form.module.css'
 
 interface Props {
   next?: string
@@ -11,31 +14,40 @@ export default function LoginForm({ next }: Props) {
   const [state, action, pending] = useActionState(loginAction, undefined)
 
   return (
-    <form action={action}>
+    <form action={action} className={styles.form}>
       {next && <input type="hidden" name="next" value={next} />}
 
-      <div>
-        <label htmlFor="email">Email</label>
-        <input id="email" name="email" type="email" required autoComplete="email" suppressHydrationWarning />
-      </div>
-
-      <div>
-        <label htmlFor="password">Password</label>
+      <label className={styles.label}>
+        Email
         <input
-          id="password"
+          name="email"
+          type="email"
+          required
+          autoComplete="email"
+          className={styles.input}
+          suppressHydrationWarning
+        />
+      </label>
+
+      <label className={styles.label}>
+        Password
+        <input
           name="password"
           type="password"
           required
           autoComplete="current-password"
+          className={styles.input}
           suppressHydrationWarning
         />
-      </div>
+      </label>
 
-      {state?.error && <p role="alert">{state.error}</p>}
+      {state?.error && <p className={styles.error} role="alert">{state.error}</p>}
 
-      <button type="submit" disabled={pending} suppressHydrationWarning>
+      <button type="submit" disabled={pending} className={styles.submit} suppressHydrationWarning>
         {pending ? 'Logging in…' : 'Log in'}
       </button>
+
+      <Link href="/forgot-password" className={localStyles.forgot}>Forgot password?</Link>
     </form>
   )
 }
