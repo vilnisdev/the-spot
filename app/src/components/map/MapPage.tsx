@@ -53,11 +53,18 @@ interface LatLng {
   lng: number
 }
 
+interface FavoriteSpot {
+  id: string
+  lat: number
+  lng: number
+}
+
 interface MapPageProps {
   spots: Spot[]
   networks: Network[]
   userId: string | null
   initialSpotId: string | null
+  favoriteSpot: FavoriteSpot | null
 }
 
 type SpotStage =
@@ -92,7 +99,7 @@ function mapSpotToForModal(spot: Spot): SpotForModal {
   }
 }
 
-export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId }: MapPageProps) {
+export default function MapPage({ spots: initialSpots, networks, userId: _userId, initialSpotId, favoriteSpot }: MapPageProps) {
   const [selectedNetworkId, setSelectedNetworkId] = useState<string | null>(null)
   const [panelOpen, setPanelOpen] = useState(false)
   const [panelFullyClosed, setPanelFullyClosed] = useState(true)
@@ -407,7 +414,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         <button
           className={styles.menuBtn}
           onClick={() => { setPanelOpen(true); setPanelFullyClosed(false) }}
-          aria-label="Open network panel"
+          aria-label="Open circle panel"
         >
           ☰
         </button>
@@ -422,17 +429,17 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
         }}
       >
         <div className={styles.panelHeader}>
-          <span className={styles.panelTitle}>The Spot</span>
+          <span className={styles.panelTitle}>Coppice</span>
           <button
             className={styles.menuBtn}
             onClick={() => setPanelOpen(false)}
-            aria-label="Close network panel"
+            aria-label="Close circle panel"
           >
             ☰
           </button>
         </div>
         <div className={styles.panelSection}>
-          <p className={styles.panelLabel}>Networks</p>
+          <p className={styles.panelLabel}>Circles</p>
           <NetworkFilter
             networks={networks}
             selected={selectedNetworkId}
@@ -449,6 +456,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
             Explore
           </button>
           <a href="/profile" className={styles.panelNavLink}>Profile</a>
+          <a href="/circles" className={styles.panelNavLink}>Circles</a>
           <a href="/settings" className={styles.panelNavLink}>Settings</a>
         </div>
       </aside>
@@ -461,6 +469,7 @@ export default function MapPage({ spots: initialSpots, networks, userId: _userId
           onDrop={handleDrop}
           onSpotClick={handleSpotClick}
           onMapReady={handleMapReady}
+          favoriteSpot={initialSpotId ? null : favoriteSpot}
         />
         {!exploreMode && <MapSearchBar onSelectSpot={handleSearchSelect} />}
       </div>

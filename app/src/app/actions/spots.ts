@@ -99,7 +99,7 @@ export async function createSpotAction(formData: FormData): Promise<SpotActionRe
   const description = (formData.get('description') as string | null)?.trim() || null
   const networkIds = formData.getAll('networks') as string[]
 
-  if (networkIds.length === 0) return { error: 'At least one network is required.' }
+  if (networkIds.length === 0) return { error: 'At least one circle is required.' }
 
   const tagNames = extractTags(description)
   const state = await reverseGeocode(lat, lng)
@@ -269,7 +269,7 @@ export async function updateSpotAction(
   const description = (formData.get('description') as string | null)?.trim() || null
   const date = (formData.get('date') as string | null) || new Date().toISOString().split('T')[0]
   const networkIds = formData.getAll('networks') as string[]
-  if (networkIds.length === 0) return { error: 'At least one network is required.' }
+  if (networkIds.length === 0) return { error: 'At least one circle is required.' }
 
   const tagNames = extractTags(description)
 
@@ -337,10 +337,11 @@ export interface MySpot {
   lng: number
   thumb_url: string | null
   network_names: string[]
+  isFavorite: boolean
 }
 
 export type MySpotListResult =
-  | { spots: MySpot[]; username: string }
+  | { spots: MySpot[]; username: string; favoriteSpotId: string | null }
   | { error: string }
 
 export async function getMySpotsAction(): Promise<MySpotListResult> {
@@ -352,9 +353,11 @@ export async function getMySpotsAction(): Promise<MySpotListResult> {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('username')
+    .select('username, favorite_spot_id')
     .eq('id', user.id)
     .single()
+
+  const favoriteSpotId = (profile?.favorite_spot_id as string | null) ?? null
 
   const { data: rows, error } = await supabase
     .from('spots')
@@ -387,10 +390,11 @@ export async function getMySpotsAction(): Promise<MySpotListResult> {
       lng: s.lng,
       thumb_url: thumbUrl,
       network_names: networkNames,
+      isFavorite: s.id === favoriteSpotId,
     })
   }
 
-  return { spots, username: profile?.username ?? user.email ?? 'User' }
+  return { spots, username: profile?.username ?? user.email ?? 'User', favoriteSpotId }
 }
 
 // ---------------------------------------------------------------------------
@@ -407,14 +411,42 @@ export interface MapSpot {
   thumb_url: string | null
 }
 
-export async function getMapSpotsAction(): Promise<MapSpot[]> {
+export interface MapSpotsResult {
+  spots: MapSpot[]
+  favoriteSpot: { id: string; lat: number; lng: number } | null
+}
+
+export async function getMapSpotsAction(): Promise<MapSpotsResult> {
   const supabase = await createSupabaseServerClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   const { data: rows } = await supabase
     .from('spots')
     .select('id, title, lat, lng, spot_networks(network_id), media(url, type)')
 
-  if (!rows) return []
+  if (!rows) return { spots: [], favoriteSpot: null }
+
+  let favoriteSpot: { id: string; lat: number; lng: number } | null = null
+  if (user) {
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('favorite_spot_id')
+      .eq('id', user.id)
+      .single()
+    const favId = (profile?.favorite_spot_id as string | null) ?? null
+    if (favId) {
+      const match = rows.find((r) => r.id === favId)
+      if (match) {
+        favoriteSpot = { id: match.id, lat: match.lat, lng: match.lng }
+      } else {
+        // Orphan: user no longer sees the favorited Spot — auto-clear
+        await supabase.from('profiles').update({ favorite_spot_id: null }).eq('id', user.id)
+      }
+    }
+  }
 
   // Collect first-image paths indexed by row position for batch signing
   const toSign: { rowIdx: number; path: string }[] = []
@@ -433,7 +465,7 @@ export async function getMapSpotsAction(): Promise<MapSpot[]> {
     })
   }
 
-  return rows.map((s, i) => ({
+  const spots = rows.map((s, i) => ({
     id: s.id,
     title: s.title,
     lat: s.lat,
@@ -441,6 +473,8 @@ export async function getMapSpotsAction(): Promise<MapSpot[]> {
     spot_networks: s.spot_networks as { network_id: string }[],
     thumb_url: signedByRow[i] ?? null,
   }))
+
+  return { spots, favoriteSpot }
 }
 
 // ---------------------------------------------------------------------------

@@ -19,8 +19,8 @@ export default async function SettingsPageRoute() {
   return (
     <SettingsPage
       username={profile?.username ?? ''}
-      themePreference={profile?.theme_preference ?? 'system'}
-      uiSizePreference={profile?.ui_size ?? 'regular'}
+      themePreference={profile?.theme_preference ?? 'dark'}
+      uiSizePreference={profile?.ui_size ?? 'medium'}
     />
   )
 }

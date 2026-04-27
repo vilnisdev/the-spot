@@ -1,4 +1,4 @@
-# The Spot
+# Coppice
 
 Private nature spot-sharing app. Members drop Pins on a shared interactive map to create Spots — named points of interest with photos, sound clips, descriptions, and tags. Spots are only visible to Members of trusted Networks. No ads, no algorithm, no feed.
 

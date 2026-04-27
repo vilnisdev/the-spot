@@ -1,11 +1,11 @@
 /**
- * Settings / UI size preference — Issue #42
+ * Settings / UI size preference — Issues #42, #52
  *
  * Verifies DB-level behaviour for UI size persistence:
- * S42-1  User can update their own ui_size
- * S42-2  Invalid value rejected by check constraint
- * S42-3  Non-owner cannot update another user's ui_size (RLS)
- * S42-4  Default value for new users is 'regular'
+ * S52-1  User can update their own ui_size across all tiers (small/medium/xl/xxl)
+ * S52-2  Invalid value rejected by check constraint
+ * S52-3  Non-owner cannot update another user's ui_size (RLS)
+ * S52-4  Default value for new users is 'medium'
  */
 import { describe, it, expect, beforeAll, afterAll } from 'vitest'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -17,8 +17,8 @@ let userClient: SupabaseClient
 let otherClient: SupabaseClient
 
 beforeAll(async () => {
-  const user = await createUser('s42-user')
-  const other = await createUser('s42-other')
+  const user = await createUser('s52-user')
+  const other = await createUser('s52-other')
 
   userId = user.id
   otherUserId = other.id
@@ -32,65 +32,34 @@ afterAll(async () => {
 })
 
 // ---------------------------------------------------------------------------
-// S42-1: User can update their own ui_size
+// S52-1: User can update their own ui_size across all tiers
 // ---------------------------------------------------------------------------
-describe('S42-1: user updates own ui_size', () => {
-  it('UPDATE succeeds and row reflects new value', async () => {
-    const { error } = await userClient
-      .from('profiles')
-      .update({ ui_size: 'large' })
-      .eq('id', userId)
+describe('S52-1: user updates own ui_size', () => {
+  it.each(['small', 'medium', 'xl', 'xxl'] as const)(
+    'UPDATE to %s succeeds and row reflects new value',
+    async (size) => {
+      const { error } = await userClient
+        .from('profiles')
+        .update({ ui_size: size })
+        .eq('id', userId)
 
-    expect(error).toBeNull()
+      expect(error).toBeNull()
 
-    const { data } = await admin
-      .from('profiles')
-      .select('ui_size')
-      .eq('id', userId)
-      .single()
+      const { data } = await admin
+        .from('profiles')
+        .select('ui_size')
+        .eq('id', userId)
+        .single()
 
-    expect(data!.ui_size).toBe('large')
-  })
-
-  it('UPDATE to xlarge succeeds', async () => {
-    const { error } = await userClient
-      .from('profiles')
-      .update({ ui_size: 'xlarge' })
-      .eq('id', userId)
-
-    expect(error).toBeNull()
-
-    const { data } = await admin
-      .from('profiles')
-      .select('ui_size')
-      .eq('id', userId)
-      .single()
-
-    expect(data!.ui_size).toBe('xlarge')
-  })
-
-  it('UPDATE back to regular succeeds', async () => {
-    const { error } = await userClient
-      .from('profiles')
-      .update({ ui_size: 'regular' })
-      .eq('id', userId)
-
-    expect(error).toBeNull()
-
-    const { data } = await admin
-      .from('profiles')
-      .select('ui_size')
-      .eq('id', userId)
-      .single()
-
-    expect(data!.ui_size).toBe('regular')
-  })
+      expect(data!.ui_size).toBe(size)
+    }
+  )
 })
 
 // ---------------------------------------------------------------------------
-// S42-2: Invalid ui_size value rejected by check constraint
+// S52-2: Invalid ui_size value rejected by check constraint
 // ---------------------------------------------------------------------------
-describe('S42-2: invalid value rejected', () => {
+describe('S52-2: invalid value rejected', () => {
   it('UPDATE with invalid size returns a check constraint error', async () => {
     const { error } = await userClient
       .from('profiles')
@@ -101,19 +70,28 @@ describe('S42-2: invalid value rejected', () => {
     // Postgres check_violation = code 23514
     expect(error!.code).toBe('23514')
   })
+
+  it('UPDATE with legacy value "regular" is rejected', async () => {
+    const { error } = await userClient
+      .from('profiles')
+      .update({ ui_size: 'regular' })
+      .eq('id', userId)
+
+    expect(error).not.toBeNull()
+    expect(error!.code).toBe('23514')
+  })
 })
 
 // ---------------------------------------------------------------------------
-// S42-3: Non-owner cannot update another user's ui_size (RLS)
+// S52-3: Non-owner cannot update another user's ui_size (RLS)
 // ---------------------------------------------------------------------------
-describe('S42-3: non-owner cannot update another profile', () => {
+describe('S52-3: non-owner cannot update another profile', () => {
   it('UPDATE on another row is blocked by RLS (0 rows affected, no error)', async () => {
-    // Seed a known baseline via admin
-    await admin.from('profiles').update({ ui_size: 'regular' }).eq('id', userId)
+    await admin.from('profiles').update({ ui_size: 'small' }).eq('id', userId)
 
     const { error } = await otherClient
       .from('profiles')
-      .update({ ui_size: 'large' })
+      .update({ ui_size: 'xl' })
       .eq('id', userId)
 
     expect(error).toBeNull()
@@ -124,21 +102,21 @@ describe('S42-3: non-owner cannot update another profile', () => {
       .eq('id', userId)
       .single()
 
-    expect(data!.ui_size).toBe('regular')
+    expect(data!.ui_size).toBe('small')
   })
 })
 
 // ---------------------------------------------------------------------------
-// S42-4: Default for new users is 'regular'
+// S52-4: Default for new users is 'medium'
 // ---------------------------------------------------------------------------
-describe('S42-4: default ui_size is regular', () => {
-  it('freshly created profile has ui_size = regular', async () => {
+describe('S52-4: default ui_size is medium', () => {
+  it('freshly created profile has ui_size = medium', async () => {
     const { data } = await admin
       .from('profiles')
       .select('ui_size')
       .eq('id', otherUserId)
       .single()
 
-    expect(data!.ui_size).toBe('regular')
+    expect(data!.ui_size).toBe('medium')
   })
 })

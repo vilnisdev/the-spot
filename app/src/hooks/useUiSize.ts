@@ -4,9 +4,9 @@ import { useEffect, useState } from 'react'
 import { UI_SIZE_EVENT, isUiSizePreference, type UiSizePreference } from '@/lib/uiSize'
 
 function readAttribute(): UiSizePreference {
-  if (typeof document === 'undefined') return 'regular'
+  if (typeof document === 'undefined') return 'medium'
   const attr = document.documentElement.dataset.size
-  return isUiSizePreference(attr) ? attr : 'regular'
+  return isUiSizePreference(attr) ? attr : 'medium'
 }
 
 export function useUiSize(): UiSizePreference {

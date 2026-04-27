@@ -1,4 +1,4 @@
-# Ubiquitous Language — The Spot
+# Ubiquitous Language — Coppice
 
 ## Core Domain
 
@@ -6,10 +6,10 @@
 |---|---|---|
 | **Spot** | A named point of interest on the map, created by a Member, belonging to one or more Networks | POI, location, place, post, entry |
 | **Pin** | The visual map marker that represents a Spot on the interactive map | Marker, dot, icon, pushpin |
-| **Network** | A named, private group of Members who share a common map view | Community, group, server, team, circle |
-| **Member** | A User who belongs to a specific Network | Follower, friend, contact, user (in Network context) |
+| **Circle** | A named, private group of Members who share a common map view | Community, group, server, team, network |
+| **Member** | A User who belongs to a specific Circle | Follower, friend, contact, user (in Circle context) |
 | **Author** | The Member who created a Spot | Creator, poster, owner, uploader |
-| **Invitation** | A unique link that grants a User access to join a Network | Invite link, referral, share link |
+| **Invitation** | A unique link that grants a User access to join a Circle | Invite link, referral, share link |
 | **Tag** | A short label attached to a Spot used to relate it to other Spots with shared characteristics | Category, label, hashtag, keyword |
 | **Comment** | A text note left on a Spot by any Member who can see it | Reply, note, response |
 | **Media** | Images, videos, or sound clips attached to a Spot | Attachment, upload, file, asset |
@@ -20,7 +20,7 @@
 | Term | Definition | Aliases to avoid |
 |---|---|---|
 | **User** | An authenticated identity in the system | Account, login, person |
-| **Member** | A User in the context of a specific Network — a User becomes a Member upon joining | Participant, subscriber |
+| **Member** | A User in the context of a specific Circle — a User becomes a Member upon joining | Participant, subscriber |
 | **Author** | A Member in the context of a specific Spot they created | Owner, creator, poster |
 
 ## Map & Navigation
@@ -33,7 +33,11 @@
 | **Fly-to** | The animated map transition that moves the viewport to a Spot's location | Pan, jump, navigate, zoom-to |
 | **Drop** | The act of placing a Pin on the map to begin creating a new Spot | Place, add, create (in map context) |
 | **Drop mode** | The transient state the map enters after a Member chooses to add a Spot, during which the next map click becomes the Drop point | Add mode, placement mode |
-| **Explore mode** | A distraction-free map viewing state that hides all chrome (side panel trigger, search bar, Add Spot button), leaving only an `esc` exit chip. Pins remain clickable. Ephemeral — lost on reload. Distinct from Drop mode: Explore is for viewing, Drop is for creating | Focus mode, fullscreen mode, immersive mode |
+| **Explore mode** | A distraction-free map viewing state that hides all chrome (side panel trigger, search bar, Add Spot button), leaving only an `esc` exit chip. Pins remain clickable. Ephemeral — lost on reload. Distinct from Drop mode: Explore is for viewing, Drop is for creating | Focus mode, fullscreen mode |
+| **Spot Card** | Compact surface shown when a Pin is selected — hero image, title, author, date. First of the two-stage Spot UI; expands into Immersive view | Preview, teaser, popup |
+| **Immersive view** | Full-viewport media-first surface for a single Spot, opened from the Spot Card. Author-only inline editing lives here | Fullscreen Spot, detail view |
+| **Map Search** | Search input on the Interactive Map that queries Spot titles and Tags via the `search_spots` RPC and flies to / opens the chosen Spot | Omnisearch, finder |
+| **Pin hover tooltip** | Small floating label shown on Pin mouseover; displays the hero image (when present) plus the Spot title | Label, popover |
 
 ## Spot Details
 
@@ -43,14 +47,22 @@
 | **Date** | The calendar date the Spot was created, auto-filled and editable | Timestamp, created-at |
 | **Description** | Free-form text field on a Spot that captures the Member's field notes | Body, content, notes, caption |
 | **Tag** | A short label on a Spot used to surface related Spots | See core domain above |
+| **Hero image** | The first image in a Spot's Media list; used as the Spot Card thumbnail and in the Pin hover tooltip | Cover photo, thumbnail |
+
+## User Preferences
+
+| Term | Definition | Storage |
+|---|---|---|
+| **Theme preference** | A User's chosen colour theme: `light`, `dark`, or `system` (resolves to OS preference). Default is `dark` | `profiles.theme_preference` + `ts_theme` cookie |
+| **UI size** | A User's chosen root font-size scale: `regular` (100%), `large` (115%), or `xlarge` (130%). Affects every `rem`-based size | `profiles.ui_size` + `ts_ui_size` cookie |
 
 ## Relationships
 
 - A **Spot** is created by exactly one **Author**.
-- A **Spot** is visible only to **Members** of the **Networks** it belongs to.
-- A **User** belongs to zero or more **Networks** simultaneously.
-- A **Network** has one or more **Members**.
-- A **Network** is joined via an **Invitation**.
+- A **Spot** is visible only to **Members** of the **Circles** it belongs to.
+- A **User** belongs to zero or more **Circles** simultaneously.
+- A **Circle** has one or more **Members**.
+- A **Circle** is joined via an **Invitation**.
 - A **Pin** represents exactly one **Spot** on the **Interactive Map**.
 - A **Spot** has one **Pin**.
 - **Members** who can see a **Spot** may leave **Comments** on it.
@@ -62,22 +74,25 @@
 
 > **Domain expert:** "The **Drop** opens the Spot creation form pre-filled with **Location** and **Date**. The **Spot** isn't saved until the **Member** submits it — so the **Pin** is provisional until then."
 
-> **Dev:** "Which **Networks** does the **Spot** belong to? All of the **Author's** Networks?"
+> **Dev:** "Which **Circles** does the **Spot** belong to? All of the **Author's** Circles?"
 
-> **Domain expert:** "The **Author** chooses. They might be in three **Networks** but only share the **Spot** with one. **Members** of the other two **Networks** won't see the **Pin** at all."
+> **Domain expert:** "The **Author** chooses. They might be in three **Circles** but only share the **Spot** with one. **Members** of the other two **Circles** won't see the **Pin** at all."
 
 > **Dev:** "Can a **Member** see a **Spot** they didn't create?"
 
-> **Domain expert:** "Yes — any **Member** of a **Network** that the **Spot** belongs to sees its **Pin** on the **Interactive Map**. Clicking it opens the **Spot Modal**. Only the **Author** can edit or delete the **Spot**."
+> **Domain expert:** "Yes — any **Member** of a **Circle** that the **Spot** belongs to sees its **Pin** on the **Interactive Map**. Clicking it opens the **Spot Modal**. Only the **Author** can edit or delete the **Spot**."
 
-> **Dev:** "What's the difference between a **Tag** and a **Network**?"
+> **Dev:** "What's the difference between a **Tag** and a **Circle**?"
 
-> **Domain expert:** "A **Network** controls visibility — it's a trust boundary. A **Tag** is just a label for relating **Spots** to each other. Two **Spots** with the same **Tag** might be in completely different **Networks**."
+> **Domain expert:** "A **Circle** controls visibility — it's a trust boundary. A **Tag** is just a label for relating **Spots** to each other. Two **Spots** with the same **Tag** might be in completely different **Circles**."
 
 ## Flagged Ambiguities
 
-- **"Hub"** — used in the product description ("a hub for hikers") but should not appear in code or UI copy. The canonical term is the app name: **The Spot**. "Hub" is marketing language.
-- **"User" vs "Member"** — a **User** is the authentication identity (exists in the auth system). A **Member** is a **User** in the context of a **Network**. In UI copy, prefer "Member" when referring to someone within a Network context; prefer "User" only for auth/profile contexts (login, profile settings).
+- **"Hub"** — used in the product description ("a hub for hikers") but should not appear in code or UI copy. The canonical term is the app name: **Coppice**. "Hub" is marketing language.
+- **"User" vs "Member"** — a **User** is the authentication identity (exists in the auth system). A **Member** is a **User** in the context of a **Circle**. In UI copy, prefer "Member" when referring to someone within a Circle context; prefer "User" only for auth/profile contexts (login, profile settings).
 - **"Pin" vs "Spot"** — these are related but distinct. A **Spot** is the domain entity (the data, the story, the field note). A **Pin** is its map representation. You drop a **Pin** to create a **Spot**; you click a **Pin** to open a **Spot Modal**. Never use them interchangeably in code or copy.
-- **"Network"** — avoid "server" (Discord connotation), "group" (too generic), or "community" (implies public). **Network** is the canonical term: small, private, trust-based.
+- **"Circle"** — the canonical UI term: small, private, trust-based. Avoid "server" (Discord connotation), "group" (too generic), "community" (implies public), or "network" (outdated — see below).
+- **UI/code split for Circle** — the **UI term is Circle**; the **DB/code term is `network`** (tables `networks`/`spot_networks`/`memberships.network_id`, RPC args `p_network_ids`, server-action names like `createNetworkAction`, TypeScript `Network` interfaces). This split is intentional technical debt from the rename: renaming the entity across tables/RPCs/RLS would cascade widely. When writing new UI copy, say "Circle". When writing code that touches the data model, use the existing `network` identifiers.
 - **"Scrapbook"** — used in product intent descriptions to convey the design philosophy (not addictive, precious, collected). It is not a domain term and should not appear in UI labels or code. It describes the *feeling*, not a feature.
+- **"Immersive view" vs "Explore mode"** — Immersive is a single Spot rendered full-viewport (media-first reading/editing). Explore is the map chrome-hidden viewing state. They are unrelated surfaces; never conflate. Explore has no Spot context; Immersive always has exactly one Spot.
+- **"Spot Card" vs "Spot Modal"** — Spot Card is the current canonical compact surface for a selected Pin. The `SpotModal` name survives in code (`src/components/map/SpotModal.tsx`) as a legacy wrapper and will be migrated; prefer "Spot Card" in UI copy and new code.

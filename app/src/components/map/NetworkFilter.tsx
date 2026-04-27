@@ -20,7 +20,7 @@ export default function NetworkFilter({ networks, selected, onChange }: NetworkF
         className={`${styles.filterBtn} ${selected === null ? styles.filterBtnActive : ''}`}
         onClick={() => onChange(null)}
       >
-        All Networks
+        All Circles
       </button>
       {networks.map((n) => (
         <button

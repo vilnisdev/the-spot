@@ -77,12 +77,16 @@ html {
   height: 100%;
 }
 
-html[data-size="large"] {
+html[data-size="medium"] {
   font-size: 18.4px; /* 115% of 16px — scales all rem-based text */
 }
 
-html[data-size="xlarge"] {
+html[data-size="xl"] {
   font-size: 20.8px; /* 130% of 16px — scales all rem-based text */
+}
+
+html[data-size="xxl"] {
+  font-size: 23.2px; /* 145% of 16px — scales all rem-based text */
 }
 
 html,

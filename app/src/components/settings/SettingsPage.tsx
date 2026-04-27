@@ -20,9 +20,10 @@ const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
 ]
 
 const SIZE_OPTIONS: { value: UiSizePreference; label: string }[] = [
-  { value: 'regular', label: 'Regular' },
-  { value: 'large', label: 'Large' },
-  { value: 'xlarge', label: 'Xtra-Large' },
+  { value: 'small', label: 'Small' },
+  { value: 'medium', label: 'Medium' },
+  { value: 'xl', label: 'XL' },
+  { value: 'xxl', label: 'XXL' },
 ]
 
 export default function SettingsPage({

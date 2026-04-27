@@ -1,4 +1,4 @@
-# PRD v1 — The Spot
+# PRD v1 — Coppice
 
 ## Problem Statement
 
@@ -8,7 +8,7 @@ There is no app designed to be a trusted, private, digital scrapbook for the out
 
 ## Solution
 
-The Spot is a private nature spot-sharing app built around a shared interactive map. Members drop Pins on the map to create Spots — named, documented points of interest with photos, sound clips, descriptions, and tags. Spots are only visible to Members of trusted Networks: small, private groups that users create and invite friends into. There are no ads, no recommendation algorithm, no influencers, no scrolling, no push notifications. The app is designed to send users outside, not keep them on-screen.
+Coppice is a private nature spot-sharing app built around a shared interactive map. Members drop Pins on the map to create Spots — named, documented points of interest with photos, sound clips, descriptions, and tags. Spots are only visible to Members of trusted Networks: small, private groups that users create and invite friends into. There are no ads, no recommendation algorithm, no influencers, no scrolling, no push notifications. The app is designed to send users outside, not keep them on-screen.
 
 The primary interface is the Interactive Map. Everything else — Networks, Profiles, search — is secondary. The aesthetic is Editorial Field Journal: ink on paper, serif typography, print-culture hierarchy. It should feel like opening a well-loved trail guide, not launching a social media app.
 
